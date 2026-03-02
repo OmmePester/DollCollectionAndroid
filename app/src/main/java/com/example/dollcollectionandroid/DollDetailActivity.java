@@ -51,26 +51,27 @@ public class DollDetailActivity extends AppCompatActivity {
         detailImage = findViewById(R.id.detailImage);
     }
 
-    // This replaces your getLetterFormatter and getNumberFormatter
+    // this method handles FORMATTING, change according to user demand
     private void setupFormatters() {
         // Formatter for letters and spaces only (Matches [a-zA-Z\s]*)
         InputFilter letterFilter = (source, start, end, dest, dstart, dend) -> {
             for (int i = start; i < end; i++) {
+                // If it's not a letter and not a space, return empty string to block it [cite: 2026-03-01]
                 if (!Character.isLetter(source.charAt(i)) && !Character.isSpaceChar(source.charAt(i))) {
                     return "";
                 }
             }
-            return null;
+            return null; // Accept the input
         };
 
-        // Apply letter filter to Name, Brand, and Model
-        detailName.setFilters(new InputFilter[]{letterFilter});
+        // Apply letter filter to Name, Brand, and Model, comment if not needed!!!!
+//        detailName.setFilters(new InputFilter[]{letterFilter});
         brandField.setFilters(new InputFilter[]{letterFilter});
         modelField.setFilters(new InputFilter[]{letterFilter});
 
-        // Formatter for numbers (max 4 digits) (Matches [0-9]* and length <= 4)
+        // Formatter for numbers (max 4 digits for YEAR)
         yearField.setFilters(new InputFilter[]{
-                new InputFilter.LengthFilter(4),
+                new InputFilter.LengthFilter(4), // Max 4 characters [cite: 2026-03-01]
                 (source, start, end, dest, dstart, dend) -> {
                     for (int i = start; i < end; i++) {
                         if (!Character.isDigit(source.charAt(i))) return "";
@@ -165,23 +166,53 @@ public class DollDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    // Doll Deleting Method (Step 2), passing the 6-digit security check and verifying deletion
+    // Doll Deleting Method (Step 2) - Centered Edition [cite: 2026-03-01]
     private void triggerSecurityChallenge() {
-        // Generate code
+        // Generate the random 6-digit code
         String securityCode = String.valueOf(new java.util.Random().nextInt(900000) + 100000);
-        final EditText input = new EditText(this);
 
-        new AlertDialog.Builder(this)
+        // 1. Setup the Input Field [cite: 2026-02-22]
+        final EditText input = new EditText(this);
+        input.setGravity(android.view.Gravity.CENTER); // Centers the typing cursor [cite: 2026-03-01]
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER); // Opens number pad automatically [cite: 2026-03-01]
+
+        // 2. Setup the Container with proper margins so the line isn't "ugly" [cite: 2026-03-01]
+        android.widget.LinearLayout container = new android.widget.LinearLayout(this);
+        container.setOrientation(android.widget.LinearLayout.VERTICAL);
+        android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
+                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
+                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+        params.setMargins(80, 20, 80, 40); // Left, Top, Right, Bottom margins [cite: 2026-03-01]
+        input.setLayoutParams(params);
+        container.addView(input);
+
+        // 3. Prepare the Styled Message (Bold + Spacing) [cite: 2026-03-01]
+        // We use <br> for lines and <b> for bold because we are using Html.fromHtml next [cite: 2026-03-01]
+        String htmlMessage = "To finalize homicide, enter this code:<br><br><b>" + securityCode + "</b>";
+
+        // 4. Build and Show the Dialog [cite: 2026-03-01]
+        AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Final Security Protocol")
-                .setMessage("To finalize homicide, enter this code: " + securityCode)
-                .setView(input)
-                .setPositiveButton("Confirm", (dialog, which) -> {
+                // This line converts the <b> tags into actual bold text on screen [cite: 2026-03-01]
+                .setMessage(android.text.Html.fromHtml(htmlMessage, android.text.Html.FROM_HTML_MODE_LEGACY))
+                .setView(container)
+                .setPositiveButton("Confirm", (d, which) -> {
                     if (input.getText().toString().equals(securityCode)) {
-                        terminateDoll();
+                        terminateDoll(); // Move to Step 3 [cite: 2026-02-22]
                     } else {
-                        System.out.println("Wrong security code. Termination failed.");
+                        Toast.makeText(this, "Wrong code. Execution failed.", Toast.LENGTH_SHORT).show();
                     }
-                }).show();
+                }).create();
+
+        dialog.show();
+
+        // 5. THE SECRET SAUCE: Force the Message TextView to center [cite: 2026-03-01]
+        // This finds the internal ID that Android uses for the message body and centers it [cite: 2026-03-01]
+        android.widget.TextView messageView = (android.widget.TextView) dialog.findViewById(android.R.id.message);
+        if (messageView != null) {
+            messageView.setGravity(android.view.Gravity.CENTER);
+        }
     }
 
     // Doll Deleting Method (Step 3), actually deleting from everywhere

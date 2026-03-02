@@ -1,17 +1,14 @@
 package com.example.dollcollectionandroid;
 
-import android.database.Cursor;
-import android.database.sqlite.SQLiteDatabase;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
-import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
-import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.dollcollectionandroid.model.Doll;
 import java.io.File;
@@ -20,8 +17,11 @@ import java.util.List;
 public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder> {
 
     private List<Doll> dollList;
+    private Context context; // Added to match the 'this' argument from CollectionActivity [cite: 2026-03-01]
 
-    public DollAdapter(List<Doll> dollList) {
+    // Updated Constructor to accept two arguments: Context and the List [cite: 2026-03-01]
+    public DollAdapter(Context context, List<Doll> dollList) {
+        this.context = context;
         this.dollList = dollList;
     }
 
@@ -35,7 +35,15 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
     @Override
     public void onBindViewHolder(@NonNull DollViewHolder holder, int position) {
         Doll doll = dollList.get(position);
-        holder.nameLabel.setText(doll.getName() + " (" + (doll.getHint() != null ? doll.getHint() : "") + ")");
+
+        // [FIX: ONLY SHOW HINT IF IT IS NOT EMPTY!] [cite: 2026-03-01]
+        // This prevents the "stupid ()" from appearing when there is no hint text. [cite: 2026-03-01]
+        String displayName = doll.getName();
+        if (doll.getHint() != null && !doll.getHint().trim().isEmpty()) {
+            displayName += " (" + doll.getHint() + ")";
+        }
+
+        holder.nameLabel.setText(displayName);
         holder.numberLabel.setText((position + 1) + ".");
 
         // Load image from the 'closet' folder [cite: 2026-02-22]

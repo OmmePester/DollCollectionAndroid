@@ -45,7 +45,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
         onCreate(db);
     }
 
-    // This method adds doll with its path into sql db, return int ID
+    // This method inserts doll for the first time, to get int ID
     public int addDoll(String name, String path) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
@@ -62,20 +62,42 @@ public class DatabaseManager extends SQLiteOpenHelper {
         return (int) id; // returns the ID (autoincrement)
     }
 
-    // This method updates the path once the file is renamed to "doll_ID.jpg"
-    public void updateImagePath(int id, String fileName) {
+    // STEP B: The "All at once" update you asked for! [cite: 2026-03-01]
+    // This saves the real path and hint without touching the Brand/Model defaults.
+    public void completeDollInitialSave(int id, String fileName, String hint) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("image_path", fileName);
+        values.put("hint", hint);
 
         db.update("items", values, "id = ?", new String[]{String.valueOf(id)});
     }
 
-    // Deleting Dolls by ID
-    public void deleteDollById(int id) {
-        SQLiteDatabase db = this.getWritableDatabase();
-        db.delete("items", "id = ?", new String[]{String.valueOf(id)});
+
+    // Must be public so DollDetailActivity can see it! [cite: 2026-02-22]
+    public Doll getDollById(int id) {
+        SQLiteDatabase db = this.getReadableDatabase();
+        // Get all dolls from the 'closet' database [cite: 2026-02-22]
+        Cursor cursor = db.query("items", null, "id=?", new String[]{String.valueOf(id)}, null, null, null);
+
+        if (cursor != null && cursor.moveToFirst()) {
+            // FIXED ORDER: Matches constructor (id, imagePath, name, hint, description, brand, model, year)
+            Doll doll = new Doll(
+                    cursor.getInt(cursor.getColumnIndexOrThrow("id")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("image_path")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("name")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("hint")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("description")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("brand")),
+                    cursor.getString(cursor.getColumnIndexOrThrow("model")),
+                    cursor.getInt(cursor.getColumnIndexOrThrow("year"))
+            );
+            cursor.close();
+            return doll;
+        }
+        return null;
     }
+
 
     public List<Doll> getAllDolls() {
         List<Doll> dolls = new ArrayList<>();
@@ -115,6 +137,13 @@ public class DatabaseManager extends SQLiteOpenHelper {
         db.update("items", values, "id = ?", new String[]{String.valueOf(id)});
     }
 
+    // This method deleting Doll by ID
+    public void deleteDollById(int id) {
+        SQLiteDatabase db = this.getWritableDatabase();
+        db.delete("items", "id = ?", new String[]{String.valueOf(id)});
+    }
+
+
     // This method completely DELETES ALL DATA IN SQL AND FOLDER
     public void fullWipeOut() {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -134,27 +163,4 @@ public class DatabaseManager extends SQLiteOpenHelper {
         }
     }
 
-    // Must be public so DollDetailActivity can see it! [cite: 2026-02-22]
-    public Doll getDollById(int id) {
-        SQLiteDatabase db = this.getReadableDatabase();
-        // Get all dolls from the 'closet' database [cite: 2026-02-22]
-        Cursor cursor = db.query("items", null, "id=?", new String[]{String.valueOf(id)}, null, null, null);
-
-        if (cursor != null && cursor.moveToFirst()) {
-            // FIXED ORDER: Matches constructor (id, imagePath, name, hint, description, brand, model, year)
-            Doll doll = new Doll(
-                    cursor.getInt(cursor.getColumnIndexOrThrow("id")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("image_path")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("name")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("hint")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("description")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("brand")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("model")),
-                    cursor.getInt(cursor.getColumnIndexOrThrow("year"))
-            );
-            cursor.close();
-            return doll;
-        }
-        return null;
-    }
 }

@@ -34,11 +34,6 @@ public class Doll {
     public String getModel() { return model; }
     public int getYear() { return year; }
 
-    // DELETER: Clears the description
-    public void deleteDescription() {
-        this.description = "";
-    }//MAY DELETE LATER AS NO USE
-
     // SETTER: Allows the user to edit the description
     public void setName(String name) {
         this.name = name;
