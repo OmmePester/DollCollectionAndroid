@@ -1,8 +1,6 @@
 package com.example.dollcollectionandroid;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,6 +8,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
+import com.bumptech.glide.Glide; // [PRO SOLUTION: Added Glide for rotation fix] [cite: 2026-03-03]
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.dollcollectionandroid.model.Doll;
 import java.io.File;
 import java.util.List;
@@ -46,11 +46,20 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         holder.nameLabel.setText(displayName);
         holder.numberLabel.setText((position + 1) + ".");
 
-        // Load image from the 'closet' folder [cite: 2026-02-22]
-        File imgFile = new File(holder.itemView.getContext().getFilesDir(), doll.getImagePath());
+        // [PRO SOLUTION: GLIDE REPLACES BITMAPFACTORY TO FIX ROTATION] [cite: 2026-03-03]
+        // [LAG FIX: Added DiskCacheStrategy and Thumbnail to prevent scroll stutter] [cite: 2026-03-03]
+        File imgFile = new File(context.getFilesDir(), doll.getImagePath());
+
         if (imgFile.exists()) {
-            Bitmap myBitmap = BitmapFactory.decodeFile(imgFile.getAbsolutePath());
-            holder.dollImage.setImageBitmap(myBitmap);
+            Glide.with(context)
+                    .load(imgFile)
+                    .centerCrop() // Optional: Makes all doll images look uniform in the list [cite: 2026-03-03]
+                    .override(200, 200) // [LAG FIX: Force smaller size for the list] [cite: 2026-03-03]
+                    .diskCacheStrategy(DiskCacheStrategy.ALL) // [LAG FIX: Save the rotated version in cache] [cite: 2026-03-03]
+                    .into(holder.dollImage); // Glide handles EXIF rotation automatically [cite: 2026-03-03]
+        } else {
+            // [FIX: Clear the image if file is missing so you don't see the wrong doll while scrolling] [cite: 2026-03-03]
+            Glide.with(context).clear(holder.dollImage);
         }
 
         // Handle clicking a doll to open the separate Activity window [cite: 2026-02-22]

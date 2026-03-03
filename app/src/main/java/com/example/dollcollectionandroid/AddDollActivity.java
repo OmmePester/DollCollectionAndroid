@@ -9,6 +9,7 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import com.bumptech.glide.Glide;    // added to handle image rotation bug
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -55,7 +56,8 @@ public class AddDollActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
             selectedImageUri = data.getData();
-            dollImageView.setImageURI(selectedImageUri);
+            // [FIX: USE GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY] [cite: 2026-03-03]
+            Glide.with(this).load(selectedImageUri).into(dollImageView);
         }
     }
 

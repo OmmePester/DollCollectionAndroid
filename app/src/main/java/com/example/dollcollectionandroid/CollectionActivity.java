@@ -35,7 +35,6 @@ public class CollectionActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        //
         setContentView(R.layout.activity_collection);
 
         // Enable the back arrow in the top bar to return to your Main Menu [cite: 2026-03-01]
@@ -47,6 +46,9 @@ public class CollectionActivity extends AppCompatActivity {
         // 1. Initialize Database and List
         dbManager = new DatabaseManager(this);
         recyclerView = findViewById(R.id.dollRecyclerView);
+
+        // [LAG FIX: Set fixed size to true if your item heights never change] [cite: 2026-03-03]
+        recyclerView.setHasFixedSize(true);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         filterButton = findViewById(R.id.filterButton); // Link to class variable
