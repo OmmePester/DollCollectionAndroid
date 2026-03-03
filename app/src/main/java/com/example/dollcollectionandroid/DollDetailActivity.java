@@ -5,6 +5,7 @@ import android.text.InputFilter;
 import android.widget.*;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import com.bumptech.glide.Glide;
 import com.example.dollcollectionandroid.model.Doll;
 import java.io.File;
 import android.graphics.BitmapFactory;
@@ -97,7 +98,10 @@ public class DollDetailActivity extends AppCompatActivity {
             // Again we use path of folder closet to load Doll image in detail window
             File imgFile = new File(getFilesDir(), currentDoll.getImagePath());
             if (imgFile.exists()) {
-                detailImage.setImageBitmap(BitmapFactory.decodeFile(imgFile.getAbsolutePath()));
+                Glide.with(this)
+                        .load(imgFile)
+                        .fitCenter()           // show the whole doll without cutting/cropping
+                        .into(detailImage);    // fixing weird rotation with Glide Class
             }
         }
     }

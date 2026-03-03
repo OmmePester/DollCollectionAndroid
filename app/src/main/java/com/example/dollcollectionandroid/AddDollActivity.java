@@ -56,8 +56,11 @@ public class AddDollActivity extends AppCompatActivity {
         super.onActivityResult(requestCode, resultCode, data);
         if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
             selectedImageUri = data.getData();
-            // [FIX: USE GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY] [cite: 2026-03-03]
-            Glide.with(this).load(selectedImageUri).into(dollImageView);
+            // USE GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY
+            Glide.with(this)
+                    .load(selectedImageUri)
+                    .fitCenter()
+                    .into(dollImageView);
         }
     }
 

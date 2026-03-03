@@ -19,12 +19,12 @@
 
         <ImageView
             android:id="@+id/dollImageView"
-            android:layout_width="250dp"
-            android:layout_height="250dp"
+            android:layout_width="match_parent"
+            android:layout_height="350dp"
+            android:scaleType="fitCenter"
             android:layout_gravity="center"
             android:layout_marginTop="8dp"
             android:background="#DDDDDD"
-            android:scaleType="centerCrop"
             android:src="@android:drawable/ic_menu_camera" />
 
         <TextView
