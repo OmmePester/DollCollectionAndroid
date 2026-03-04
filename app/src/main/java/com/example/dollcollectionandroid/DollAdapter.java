@@ -46,25 +46,28 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         holder.nameLabel.setText(displayName);
         holder.numberLabel.setText((position + 1) + ".");
 
-        // [PRO SOLUTION: GLIDE REPLACES BITMAPFACTORY TO FIX ROTATION] [cite: 2026-03-03]
-        // [LAG FIX: Added DiskCacheStrategy and Thumbnail to prevent scroll stutter] [cite: 2026-03-03]
-        File imgFile = new File(context.getFilesDir(), doll.getImagePath());
+        // adding the path to "closet" folder here
+        File closetFolder = new File(context.getFilesDir(), "closet");
+        File imgFile = new File(closetFolder, doll.getImagePath());
 
+        // using GLIDE CLASS to fix weird rotations and clearing cache, because otherwise it shows ghost files
         if (imgFile.exists()) {
             Glide.with(context)
                     .load(imgFile)
-                    .centerCrop() // Optional: Makes all doll images look uniform in the list [cite: 2026-03-03]
-                    .override(200, 200) // [LAG FIX: Force smaller size for the list] [cite: 2026-03-03]
-                    .diskCacheStrategy(DiskCacheStrategy.ALL) // [LAG FIX: Save the rotated version in cache] [cite: 2026-03-03]
-                    .into(holder.dollImage); // Glide handles EXIF rotation automatically [cite: 2026-03-03]
+                    .centerCrop()
+                    .override(200, 200)
+                    .skipMemoryCache(true)                        // skip short term memory RAM cache
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)    // skip long term memory
+                    .into(holder.dollImage);
         } else {
-            // [FIX: Clear the image if file is missing so you don't see the wrong doll while scrolling] [cite: 2026-03-03]
+            // Clear recycled images [cite: 2026-03-03]
             Glide.with(context).clear(holder.dollImage);
+            holder.dollImage.setImageResource(android.R.color.darker_gray);
         }
 
         // Handle clicking a doll to open the separate Activity window [cite: 2026-02-22]
         holder.itemView.setOnClickListener(v -> {
-            // We use an Intent because DollDetailActivity is a full window, not a fragment [cite: 2026-02-22]
+            // We use an Intent because DollDetailActivity is a full window, not a fragment
             android.content.Intent intent = new android.content.Intent(v.getContext(), DollDetailActivity.class);
 
             // Pass the ID using "DOLL_ID" to match what you wrote in the Activity [cite: 2026-02-22]

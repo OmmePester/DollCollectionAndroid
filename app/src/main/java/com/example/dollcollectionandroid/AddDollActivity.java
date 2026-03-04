@@ -73,17 +73,26 @@ public class AddDollActivity extends AppCompatActivity {
         String name = nameInput.getText().toString();
         String hint = hintInput.getText().toString();
 
-        // 1. Save entry to SQL [cite: 2026-02-22]
-        // This method sets "Unknown" and "Generic" as defaults in the DB! [cite: 2026-03-01]
+        // 1. Saving entry to SQL
+        // This method sets default values with adding Doll to db
+        // We pass "pending" as a placeholder for the path until the file is created.
         int newId = dbManager.addDoll(name, "pending");
 
-        // 2. Create the unique filename for your 'closet' [cite: 2026-02-22]
+        // 2. Creating unique filename for your 'closet' folder
         String fileName = "doll_" + newId + ".jpg";
 
         try {
-            // 3. Copy image from gallery to private closet folder [cite: 2026-02-22]
+            // creating 'closet' subfolder if it doesn't exist
+            File closetFolder = new File(getFilesDir(), "closet");
+            if (!closetFolder.exists()) {
+                closetFolder.mkdirs();
+            }
+
+            // preparing physical file inside 'closet' folder
+            File closetFile = new File(closetFolder, fileName);
+
+            // 3. Copying image from gallery to private 'closet' folder
             InputStream is = getContentResolver().openInputStream(selectedImageUri);
-            File closetFile = new File(getFilesDir(), fileName);
             FileOutputStream fos = new FileOutputStream(closetFile);
 
             byte[] buffer = new byte[1024];
@@ -94,13 +103,13 @@ public class AddDollActivity extends AppCompatActivity {
             is.close();
             fos.close();
 
-            // 4. Update SQL with real path and hint [cite: 2026-02-22]
+            // 4. Update SQL with real path and hint (DELETE HINT LATERRRR!!!!)
             dbManager.completeDollInitialSave(newId, fileName, hint);
 
             Toast.makeText(this, "Saved to Closet!", Toast.LENGTH_SHORT).show();
 
-            // 5. Go back to the list [cite: 2026-02-22, 2026-03-01]
-            // We use finish() instead of Fragment Transactions now.
+            // 5. Going back to the list
+            // We use finish() to close window by adding doll
             finish();
 
         } catch (Exception e) {

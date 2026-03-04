@@ -21,9 +21,9 @@ public class MainActivity extends AppCompatActivity {
 
         // ============================================================
         // THE SAFETY SWITCH
-        // Uncomment to wipe, Comment to save. [cite: 2026-02-22]
+        // Uncomment to wipe, Comment to save.
         // ============================================================
-        // dbManager.fullWipeOut();
+//         dbManager.fullWipeOut();
 
         // 1. VIEW COLLECTION: Redirects to the CollectionActivity window [cite: 2026-03-01]
         findViewById(R.id.btnViewCollection).setOnClickListener(v -> {

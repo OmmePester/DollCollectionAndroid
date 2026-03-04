@@ -6,13 +6,16 @@ import android.widget.*;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.dollcollectionandroid.model.Doll;
 import java.io.File;
-import android.graphics.BitmapFactory;
 
 public class DollDetailActivity extends AppCompatActivity {
     // Use TextField (EditText) for everything you want the user to be able to edit
     private EditText detailName, hintField, descriptionArea, brandField, modelField, yearField;
+    private EditText birthDateField, birthTimeField;
+    private AutoCompleteTextView birthPlaceField;
+    private java.util.Calendar birthCalendar = java.util.Calendar.getInstance();
     private ImageView detailImage;
     private DatabaseManager dbManager;
     private int dollId;
@@ -42,14 +45,21 @@ public class DollDetailActivity extends AppCompatActivity {
     }
 
     private void initViews() {
-        //
+        detailImage = findViewById(R.id.detailImage);
+
         detailName = findViewById(R.id.detailName);
-        hintField = findViewById(R.id.hintField);
-        descriptionArea = findViewById(R.id.descriptionArea);
         brandField = findViewById(R.id.brandField);
         modelField = findViewById(R.id.modelField);
+        descriptionArea = findViewById(R.id.descriptionArea);
         yearField = findViewById(R.id.yearField);
-        detailImage = findViewById(R.id.detailImage);
+        hintField = findViewById(R.id.hintField);
+
+        // the date and time and city complex inputs are received here
+        birthDateField = findViewById(R.id.birthDateField);
+        birthTimeField = findViewById(R.id.birthTimeField);
+        birthPlaceField = findViewById(R.id.birthPlaceField);
+        birthDateField.setOnClickListener(v -> showDateSpinner());    // 3 scrolls of date spinner
+        birthTimeField.setOnClickListener(v -> showTimeSpinner());    // 2 scrolls time spinner
     }
 
     // this method handles FORMATTING, change according to user demand
@@ -82,6 +92,50 @@ public class DollDetailActivity extends AppCompatActivity {
         });
     }
 
+    // this method shows three spinner of DatePicker Class
+    private void showDateSpinner() {
+        // Get current values from the calendar
+        int year = birthCalendar.get(java.util.Calendar.YEAR);
+        int month = birthCalendar.get(java.util.Calendar.MONTH);
+        int day = birthCalendar.get(java.util.Calendar.DAY_OF_MONTH);
+
+        // Force the Locale to UK just for this dialog to get Day-Month-Year wheel order
+        java.util.Locale.setDefault(java.util.Locale.UK);
+
+        android.app.DatePickerDialog datePickerDialog = new android.app.DatePickerDialog(
+                this,
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+                (view, selectedYear, selectedMonth, selectedDay) -> {
+                    birthCalendar.set(selectedYear, selectedMonth, selectedDay);
+
+                    // %02d ensures "07/09" instead of "7/9"
+                    String dateStr = String.format("%02d/%02d/%d", selectedDay, (selectedMonth + 1), selectedYear);
+                    birthDateField.setText(dateStr);
+                },
+                year, month, day
+        );
+
+        // This removes the "Header" date that sometimes messes up the look
+        datePickerDialog.setTitle("Select Birth Date");
+        datePickerDialog.show();
+    }
+
+    // this method shows two spinner (24-hour format) of TimePicker Class
+    private void showTimeSpinner() {
+        new android.app.TimePickerDialog(this, android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+                (view, hourOfDay, minute) -> {
+                    birthCalendar.set(java.util.Calendar.HOUR_OF_DAY, hourOfDay);
+                    birthCalendar.set(java.util.Calendar.MINUTE, minute);
+
+                    String timeStr = String.format("%02d:%02d", hourOfDay, minute);
+                    birthTimeField.setText(timeStr);
+                },
+                birthCalendar.get(java.util.Calendar.HOUR_OF_DAY),
+                birthCalendar.get(java.util.Calendar.MINUTE),
+                true    // THIS PART FORCES the 24-HOUR FORMAT (2 SCROLLS)
+        ).show();
+    }
+
     private void loadDollData() {
         // Correct way: Ask the dbManager to get the doll by its ID
         currentDoll = dbManager.getDollById(dollId);
@@ -93,15 +147,27 @@ public class DollDetailActivity extends AppCompatActivity {
             descriptionArea.setText(currentDoll.getDescription());
             brandField.setText(currentDoll.getBrand());
             modelField.setText(currentDoll.getModel());
-            yearField.setText(String.valueOf(currentDoll.getYear())); // Convert int to String for the UI
+            yearField.setText(String.valueOf(currentDoll.getYear()));    // Convert int to String for the UI
+
+            // Load the new Natal Chart fields into the UI
+            birthDateField.setText(currentDoll.getBirthDate());
+            birthTimeField.setText(currentDoll.getBirthTime());
+            birthPlaceField.setText(currentDoll.getBirthCity());
+            // Latitude and Longitude are hidden/internal for now
 
             // Again we use path of folder closet to load Doll image in detail window
-            File imgFile = new File(getFilesDir(), currentDoll.getImagePath());
+            File closetFolder = new File(getFilesDir(), "closet");
+            File imgFile = new File(closetFolder, currentDoll.getImagePath());
             if (imgFile.exists()) {
                 Glide.with(this)
                         .load(imgFile)
                         .fitCenter()           // show the whole doll without cutting/cropping
+                        .skipMemoryCache(true)
+                        .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .into(detailImage);    // fixing weird rotation with Glide Class
+            } else {
+                // If file is missing, clear the view so you don't see a previous doll
+                Glide.with(this).clear(detailImage);
             }
         }
     }
@@ -110,11 +176,9 @@ public class DollDetailActivity extends AppCompatActivity {
     private void handleSaveDescription() {
         // 1. Collect data from UI
         String newName = detailName.getText().toString();
-        String newHint = hintField.getText().toString();
-        String newDesc = descriptionArea.getText().toString();
         String newBrand = brandField.getText().toString();
         String newModel = modelField.getText().toString();
-
+        String newDesc = descriptionArea.getText().toString();
         // Convert year text to number safely
         int newYear = 0;
         try {
@@ -122,24 +186,40 @@ public class DollDetailActivity extends AppCompatActivity {
         } catch (NumberFormatException e) {
             System.out.println("Year was not a number, defaulting to 0");
         }
+        String newHint = hintField.getText().toString();
+        String newDate = birthDateField.getText().toString();
+        String newTime = birthTimeField.getText().toString();
+        String newCity = birthPlaceField.getText().toString();
+        // keep old coordinates for now, until we add API!!!!
+        double currentLat = currentDoll.getLatitude();     // keep old coordinates for now, until we add API!!!!
+        double currentLon = currentDoll.getLongitude();    // keep old coordinates for now, until we add API!!!!
 
-        // 2. Update the Java Object in memory
+        // 2. Use setters to set variables of Java Doll Object in memory
         currentDoll.setName(newName);
-        currentDoll.setHint(newHint);
-        currentDoll.setDescription(newDesc);
         currentDoll.setBrand(newBrand);
         currentDoll.setModel(newModel);
+        currentDoll.setDescription(newDesc);
         currentDoll.setYear(newYear);
+        currentDoll.setHint(newHint);
+        currentDoll.setBirthDate(newDate);
+        currentDoll.setBirthTime(newTime);
+        currentDoll.setBirthCity(newCity);
 
-        // 3. One single call to save everything to the closet.db
+        // 3. Use DataBaseManager to save every change with SQL to closet.db
         dbManager.updateFullDollDetails(
-                currentDoll.getId(),
+                currentDoll.getId(),           // redundant but still
+                currentDoll.getImagePath(),    // redundant but still
                 newName,
-                newHint,
-                newDesc,
                 newBrand,
                 newModel,
-                newYear
+                newDesc,
+                newYear,
+                newHint,
+                newDate,
+                newTime,
+                newCity,
+                currentLat,
+                currentLon
         );
 
         System.out.println("Success: Entire profile updated in SQL.");
@@ -221,8 +301,9 @@ public class DollDetailActivity extends AppCompatActivity {
 
     // Doll Deleting Method (Step 3), actually deleting from everywhere
     private void terminateDoll() {
-        // firstly delete IMAGE FILE from folder 'closet'
-        File fileToDelete = new File(getFilesDir(), currentDoll.getImagePath());
+        // firstly point to folder 'closet', then get image path
+        File closetFolder = new File(getFilesDir(), "closet");
+        File fileToDelete = new File(closetFolder, currentDoll.getImagePath());
 
         if (fileToDelete.exists()) {
             if (fileToDelete.delete()) {

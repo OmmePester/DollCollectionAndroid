@@ -7,7 +7,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import com.example.dollcollectionandroid.model.Doll;
 
-import java.io.File;
+//import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,8 +15,8 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     // This tells Java where the file is (Android handles the path internally)
     private static final String DATABASE_NAME = "closet.db";
-    private static final int DATABASE_VERSION = 1;
-
+    // Version increased to 2 to add new columns (Date, Time, City)
+    private static final int DATABASE_VERSION = 2;
     private Context myContext;
 
     public DatabaseManager(Context context) {
@@ -26,16 +26,22 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // now we have this, instead of manually creating db
+        // STRICT ORDER: ID, Path, Name, Brand, Model, Desc, Year, Hint, Date, Time, City, Lat, Long
+        // ALL COLUMNS ARE NOT NULL
         String createTable = "CREATE TABLE items (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
-                "name TEXT NOT NULL, " +
                 "image_path TEXT NOT NULL, " +
-                "hint TEXT NOT NULL, " +
-                "description TEXT NOT NULL, " +
+                "name TEXT NOT NULL, " +
                 "brand TEXT NOT NULL, " +
                 "model TEXT NOT NULL, " +
-                "year INTEGER NOT NULL)";
+                "description TEXT NOT NULL, " +
+                "year INTEGER NOT NULL, " +
+                "hint TEXT NOT NULL, " +
+                "birth_date TEXT NOT NULL, " +
+                "birth_time TEXT NOT NULL, " +
+                "birth_city TEXT NOT NULL, " +
+                "latitude REAL NOT NULL, " +
+                "longitude REAL NOT NULL)";
         db.execSQL(createTable);
     }
 
@@ -49,20 +55,25 @@ public class DatabaseManager extends SQLiteOpenHelper {
     public int addDoll(String name, String path) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
-        values.put("name", name);
+        // the actual two values name and image_path
         values.put("image_path", path);
-
+        values.put("name", name);
+        // the other values that are initially entered as default values
         values.put("brand", "Unknown");
         values.put("model", "Generic");
+        values.put("description", "");
         values.put("year", 0);
         values.put("hint", "");
-        values.put("description", "");
+        values.put("birth_date", "");
+        values.put("birth_time", "");
+        values.put("birth_city", "");
+        values.put("latitude", 0.0);
+        values.put("longitude", 0.0);
 
         long id = db.insert("items", null, values);
         return (int) id; // returns the ID (autoincrement)
     }
 
-    // STEP B: The "All at once" update you asked for! [cite: 2026-03-01]
     // This saves the real path and hint without touching the Brand/Model defaults.
     public void completeDollInitialSave(int id, String fileName, String hint) {
         SQLiteDatabase db = this.getWritableDatabase();
@@ -73,66 +84,72 @@ public class DatabaseManager extends SQLiteOpenHelper {
         db.update("items", values, "id = ?", new String[]{String.valueOf(id)});
     }
 
-
-    // Must be public so DollDetailActivity can see it! [cite: 2026-02-22]
+    // this method interacts with a Dolls by ID from SQL DB, runs in DollDetailActivity
     public Doll getDollById(int id) {
         SQLiteDatabase db = this.getReadableDatabase();
         // Get all dolls from the 'closet' database [cite: 2026-02-22]
         Cursor cursor = db.query("items", null, "id=?", new String[]{String.valueOf(id)}, null, null, null);
 
         if (cursor != null && cursor.moveToFirst()) {
-            // FIXED ORDER: Matches constructor (id, imagePath, name, hint, description, brand, model, year)
-            Doll doll = new Doll(
-                    cursor.getInt(cursor.getColumnIndexOrThrow("id")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("image_path")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("name")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("hint")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("description")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("brand")),
-                    cursor.getString(cursor.getColumnIndexOrThrow("model")),
-                    cursor.getInt(cursor.getColumnIndexOrThrow("year"))
-            );
+            Doll doll = cursorToDoll(cursor);
             cursor.close();
             return doll;
         }
         return null;
     }
 
-
+    // this method creates List of Dolls by loading them from SQL DB, runs in CollectionActivity
     public List<Doll> getAllDolls() {
         List<Doll> dolls = new ArrayList<>();
         String sql = "SELECT * FROM items";
         SQLiteDatabase db = this.getReadableDatabase();
-        Cursor rs = db.rawQuery(sql, null);
+        Cursor cursor = db.rawQuery(sql, null);
 
-        if (rs.moveToFirst()) {
+        if (cursor.moveToFirst()) {
             do {
-                int id = rs.getInt(rs.getColumnIndexOrThrow("id"));
-                String imagePath = rs.getString(rs.getColumnIndexOrThrow("image_path"));
-                String name = rs.getString(rs.getColumnIndexOrThrow("name"));
-                String hint = rs.getString(rs.getColumnIndexOrThrow("hint"));
-                String description = rs.getString(rs.getColumnIndexOrThrow("description"));
-                String brand = rs.getString(rs.getColumnIndexOrThrow("brand"));
-                String model = rs.getString(rs.getColumnIndexOrThrow("model"));
-                int year = rs.getInt(rs.getColumnIndexOrThrow("year"));
-
-                // FIXED ORDER: Matches (id, imagePath, name, hint, description, brand, model, year)
-                dolls.add(new Doll(id, imagePath, name, hint, description, brand, model, year));
-            } while (rs.moveToNext());
+                dolls.add(cursorToDoll(cursor));
+            } while (cursor.moveToNext());
         }
-        rs.close();
+        cursor.close();
         return dolls;
     }
 
-    public void updateFullDollDetails(int id, String name, String hint, String description, String brand, String model, int year) {
+    // this is a HELPER method to MAP cursor to Doll objects
+    private Doll cursorToDoll(Cursor cursor) {
+        return new Doll(
+                cursor.getInt(cursor.getColumnIndexOrThrow("id")),
+                cursor.getString(cursor.getColumnIndexOrThrow("image_path")),
+                cursor.getString(cursor.getColumnIndexOrThrow("name")),
+                cursor.getString(cursor.getColumnIndexOrThrow("brand")),
+                cursor.getString(cursor.getColumnIndexOrThrow("model")),
+                cursor.getString(cursor.getColumnIndexOrThrow("description")),
+                cursor.getInt(cursor.getColumnIndexOrThrow("year")),
+                cursor.getString(cursor.getColumnIndexOrThrow("hint")),
+                cursor.getString(cursor.getColumnIndexOrThrow("birth_date")),
+                cursor.getString(cursor.getColumnIndexOrThrow("birth_time")),
+                cursor.getString(cursor.getColumnIndexOrThrow("birth_city")),
+                cursor.getDouble(cursor.getColumnIndexOrThrow("latitude")),
+                cursor.getDouble(cursor.getColumnIndexOrThrow("longitude"))
+        );
+    }
+
+    // this method updates Doll variables, which runs in DollDetailActivity
+    public void updateFullDollDetails(int id, String path, String name, String brand, String model, String desc, int year, String hint,
+                                      String bDate, String bTime, String bCity, double lat, double lon) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
+        values.put("image_path", path);
         values.put("name", name);
-        values.put("hint", hint);
-        values.put("description", description);
         values.put("brand", brand);
         values.put("model", model);
-        values.put("year", year); // It is YEAR not price
+        values.put("description", desc);
+        values.put("year", year);
+        values.put("hint", hint);
+        values.put("birth_date", bDate);
+        values.put("birth_time", bTime);
+        values.put("birth_city", bCity);
+        values.put("latitude", lat);
+        values.put("longitude", lon);
 
         db.update("items", values, "id = ?", new String[]{String.valueOf(id)});
     }
@@ -144,23 +161,38 @@ public class DatabaseManager extends SQLiteOpenHelper {
     }
 
 
+
+
     // This method completely DELETES ALL DATA IN SQL AND FOLDER
     public void fullWipeOut() {
         SQLiteDatabase db = this.getWritableDatabase();
         db.delete("items", null, null); // deletes all data in rows
         db.delete("sqlite_sequence", "name='items'", null); // resets counter
 
-        // Use myContext which we saved in the constructor
-        java.io.File closetFolder = myContext.getFilesDir();
-        java.io.File[] files = closetFolder.listFiles();
+        // 1. Clear the 'closet' subfolder
+        java.io.File closetFolder = new java.io.File(myContext.getFilesDir(), "closet");
+        if (closetFolder.exists()) {
+            java.io.File[] files = closetFolder.listFiles();
+            if (files != null) {
+                for (java.io.File file : files) {
+                    // only delete files that start with "doll_"
+                    if (file.getName().startsWith("doll_")) {
+                        file.delete();
+                    }
+                }
+            }
+        }
 
-        if (files != null) {
-            for (java.io.File file : files) {
+        // 2. Clear the root 'files' folder (one folder up) to remove "ghost" files
+        java.io.File rootFolder = myContext.getFilesDir();
+        java.io.File[] rootFiles = rootFolder.listFiles();
+        if (rootFiles != null) {
+            for (java.io.File file : rootFiles) {
+                // only delete files that start with "doll_"
                 if (file.getName().startsWith("doll_")) {
                     file.delete();
                 }
             }
         }
     }
-
 }
