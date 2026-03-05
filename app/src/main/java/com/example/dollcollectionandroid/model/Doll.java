@@ -11,8 +11,8 @@ public class Doll {
     private int year;    // will turn into date later
     private String hint;    // hint becomes gender as hint is useless
     // Extra variables for Natal Chart / Big Three
-    private String birthDate;  // Format: "DD/MM/YYYY"
-    private String birthTime;  // Format: "HH:mm" (24h)
+    private String birthDate;    // Format: "DD/MM/YYYY"
+    private String birthTime;    // Format: "HH:mm" (24h)
     private String birthCity;
     private double latitude;
     private double longitude;

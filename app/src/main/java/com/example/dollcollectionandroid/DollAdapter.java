@@ -54,8 +54,7 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         if (imgFile.exists()) {
             Glide.with(context)
                     .load(imgFile)
-                    .centerCrop()
-                    .override(200, 200)
+                    .fitCenter()    // Scales to width, keeps full height visible
                     .skipMemoryCache(true)                        // skip short term memory RAM cache
                     .diskCacheStrategy(DiskCacheStrategy.NONE)    // skip long term memory
                     .into(holder.dollImage);
@@ -65,12 +64,12 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
             holder.dollImage.setImageResource(android.R.color.darker_gray);
         }
 
-        // Handle clicking a doll to open the separate Activity window [cite: 2026-02-22]
+        // Handle clicking a doll to open the separate Activity window
         holder.itemView.setOnClickListener(v -> {
             // We use an Intent because DollDetailActivity is a full window, not a fragment
             android.content.Intent intent = new android.content.Intent(v.getContext(), DollDetailActivity.class);
 
-            // Pass the ID using "DOLL_ID" to match what you wrote in the Activity [cite: 2026-02-22]
+            // Pass the ID using "DOLL_ID" to match what you wrote in the Activity
             intent.putExtra("DOLL_ID", doll.getId());
 
             v.getContext().startActivity(intent);

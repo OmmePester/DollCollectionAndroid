@@ -43,4 +43,13 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation("com.github.bumptech.glide:glide:4.16.0")}
+    // for solving weird image rotations
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    // for free network calls to get city names in JSON format
+    implementation("com.squareup.okhttp3:okhttp:4.12.0")
+    // for calculating the planets (Swiss Ephemeris)
+//    implementation("org.swisseph:swisseph-java:2.01.00-1")
+
+
+
+}

@@ -15,6 +15,16 @@ public class DollDetailActivity extends AppCompatActivity {
     private EditText detailName, hintField, descriptionArea, brandField, modelField, yearField;
     private EditText birthDateField, birthTimeField;
     private AutoCompleteTextView birthPlaceField;
+    // Manager that handles the internet search for cities
+    private CitySearchManager citySearchManager;
+    // Lists to store the data coming back from the API so we can save the coordinates later
+    private java.util.List<Double> lastFetchedLats = new java.util.ArrayList<>();
+    private java.util.List<Double> lastFetchedLons = new java.util.ArrayList<>();
+    private double selectedLat = 0.0;
+    private double selectedLon = 0.0;
+    // Handler and Runnable to manage the 1-second delay and prevent ERROR 429 (too many requests)
+    private android.os.Handler searchHandler = new android.os.Handler(android.os.Looper.getMainLooper());
+    private Runnable searchRunnable;
     private java.util.Calendar birthCalendar = java.util.Calendar.getInstance();
     private ImageView detailImage;
     private DatabaseManager dbManager;
@@ -26,12 +36,17 @@ public class DollDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_doll_detail);
 
+        // initialize DatabaseManager for SQL DB
         dbManager = new DatabaseManager(this);
+        // Initialize CitySearchManager for search via API
+        citySearchManager = new CitySearchManager();
+
         // Get the ID passed from the list
         dollId = getIntent().getIntExtra("DOLL_ID", -1);
 
         initViews();
-        setupFormatters(); //
+        setupCityAutocomplete();    // Link the birthPlaceField to the API
+        setupFormatters();    // formatters to make fields with right type inputs
         loadDollData();
 
         // Method that saves fields of detail window
@@ -136,6 +151,70 @@ public class DollDetailActivity extends AppCompatActivity {
         ).show();
     }
 
+    // this method gives suggestions while typing city names, very useful
+    private void setupCityAutocomplete() {
+        // The adapter handles how the list of suggestions looks
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_dropdown_item_1line);
+        birthPlaceField.setAdapter(adapter);
+        birthPlaceField.setThreshold(3);    // Wait until 3 chars are typed to avoid spamming the API
+
+        birthPlaceField.addTextChangedListener(new android.text.TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+
+                // 1. Cancel any pending search so we don't spam the API [cite: 2026-03-03]
+                if (searchRunnable != null) {
+                    searchHandler.removeCallbacks(searchRunnable);
+                }
+
+                if (s.length() >= 3) {
+                    // 3. Set a 1-second timer. If you keep typing, the timer resets. [cite: 2026-03-03]
+                    searchRunnable = () -> {
+                        citySearchManager.searchCity(s.toString(), new CitySearchManager.CityCallback() {
+                            @Override
+                            public void onResult(java.util.List<String> cities, java.util.List<Double> lats, java.util.List<Double> lons) {
+                                runOnUiThread(() -> {
+                                    // Only clear the lists when we have FRESH data to put in them [cite: 2026-03-04]
+                                    lastFetchedLats.clear();
+                                    lastFetchedLons.clear();
+                                    lastFetchedLats.addAll(lats);
+                                    lastFetchedLons.addAll(lons);
+
+                                    adapter.clear();
+                                    adapter.addAll(cities);
+                                    adapter.notifyDataSetChanged();
+                                });
+                            }
+
+                            @Override
+                            public void onError(String error) {
+                                runOnUiThread(() -> System.out.println("City Search Error: " + error));
+                            }
+                        });
+                    };
+                    searchHandler.postDelayed(searchRunnable, 800); // Slightly faster response time
+                }
+            }
+
+            @Override
+            public void afterTextChanged(android.text.Editable s) {}
+        });
+
+        // This links the click to the specific Lat/Lon of the selected city [cite: 2026-03-03]
+        birthPlaceField.setOnItemClickListener((parent, view, position, id) -> {
+            // Forcefully lock the coordinates from the list based on the user's click [cite: 2026-03-04]
+            if (position < lastFetchedLats.size()) {
+                selectedLat = lastFetchedLats.get(position);
+                selectedLon = lastFetchedLons.get(position);
+                // Print to console so we can prove it is NOT zero anymore [cite: 2026-03-03]
+                System.out.println("LOCKED COORDS: " + selectedLat + ", " + selectedLon);
+            }
+        });
+    }
+
     private void loadDollData() {
         // Correct way: Ask the dbManager to get the doll by its ID
         currentDoll = dbManager.getDollById(dollId);
@@ -190,9 +269,10 @@ public class DollDetailActivity extends AppCompatActivity {
         String newDate = birthDateField.getText().toString();
         String newTime = birthTimeField.getText().toString();
         String newCity = birthPlaceField.getText().toString();
-        // keep old coordinates for now, until we add API!!!!
-        double currentLat = currentDoll.getLatitude();     // keep old coordinates for now, until we add API!!!!
-        double currentLon = currentDoll.getLongitude();    // keep old coordinates for now, until we add API!!!!
+        // If the user picked a city from the list, we use the new coordinates.
+        // Otherwise, we keep the ones already in currentDoll
+        double finalLat = (selectedLat != 0.0) ? selectedLat : currentDoll.getLatitude();
+        double finalLon = (selectedLon != 0.0) ? selectedLon : currentDoll.getLongitude();
 
         // 2. Use setters to set variables of Java Doll Object in memory
         currentDoll.setName(newName);
@@ -204,6 +284,8 @@ public class DollDetailActivity extends AppCompatActivity {
         currentDoll.setBirthDate(newDate);
         currentDoll.setBirthTime(newTime);
         currentDoll.setBirthCity(newCity);
+        currentDoll.setLatitude(finalLat);     // API coordinate additions
+        currentDoll.setLongitude(finalLon);    // API coordinate additions
 
         // 3. Use DataBaseManager to save every change with SQL to closet.db
         dbManager.updateFullDollDetails(
@@ -218,8 +300,8 @@ public class DollDetailActivity extends AppCompatActivity {
                 newDate,
                 newTime,
                 newCity,
-                currentLat,
-                currentLon
+                finalLat,
+                finalLon
         );
 
         System.out.println("Success: Entire profile updated in SQL.");
