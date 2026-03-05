@@ -36,12 +36,7 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
     public void onBindViewHolder(@NonNull DollViewHolder holder, int position) {
         Doll doll = dollList.get(position);
 
-        // [FIX: ONLY SHOW HINT IF IT IS NOT EMPTY!] [cite: 2026-03-01]
-        // This prevents the "stupid ()" from appearing when there is no hint text. [cite: 2026-03-01]
         String displayName = doll.getName();
-        if (doll.getHint() != null && !doll.getHint().trim().isEmpty()) {
-            displayName += " (" + doll.getHint() + ")";
-        }
 
         holder.nameLabel.setText(displayName);
         holder.numberLabel.setText((position + 1) + ".");
@@ -50,12 +45,16 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         File closetFolder = new File(context.getFilesDir(), "closet");
         File imgFile = new File(closetFolder, doll.getImagePath());
 
-        // using GLIDE CLASS to fix weird rotations and clearing cache, because otherwise it shows ghost files
+        // using GLIDE CLASS to fix weird rotations and clearing cache, because otherwise it shows ghost files!!!!
         if (imgFile.exists()) {
+            // calculating limits: Width is 1.5x larger, Height is limited to 2x Width
+            int targetWidthPx = (int) (100 * context.getResources().getDisplayMetrics().density);
+            int maxHeightPx = (int) (targetWidthPx * 0.5);
+            //
             Glide.with(context)
                     .load(imgFile)
-                    .centerCrop()
-                    .override(200, 200)
+                    .override(targetWidthPx, maxHeightPx)    //
+                    .fitCenter()
                     .skipMemoryCache(true)                        // skip short term memory RAM cache
                     .diskCacheStrategy(DiskCacheStrategy.NONE)    // skip long term memory
                     .into(holder.dollImage);

@@ -17,7 +17,7 @@ import java.io.InputStream;
 //
 public class AddDollActivity extends AppCompatActivity {
 
-    private EditText nameInput, hintInput;
+    private EditText nameInput;
     private ImageView dollImageView;
     private Uri selectedImageUri;
     private DatabaseManager dbManager;
@@ -36,7 +36,6 @@ public class AddDollActivity extends AppCompatActivity {
 
         dbManager = new DatabaseManager(this);
         nameInput = findViewById(R.id.nameInput);
-        hintInput = findViewById(R.id.hintInput);
         dollImageView = findViewById(R.id.dollImageView);
         Button saveButton = findViewById(R.id.saveButton);
 
@@ -71,7 +70,6 @@ public class AddDollActivity extends AppCompatActivity {
         }
 
         String name = nameInput.getText().toString();
-        String hint = hintInput.getText().toString();
 
         // 1. Saving entry to SQL
         // This method sets default values with adding Doll to db
@@ -103,8 +101,8 @@ public class AddDollActivity extends AppCompatActivity {
             is.close();
             fos.close();
 
-            // 4. Update SQL with real path and hint (DELETE HINT LATERRRR!!!!)
-            dbManager.completeDollInitialSave(newId, fileName, hint);
+            // 4. Update SQL with real path now
+            dbManager.completeDollInitialSave(newId, fileName);
 
             Toast.makeText(this, "Saved to Closet!", Toast.LENGTH_SHORT).show();
 

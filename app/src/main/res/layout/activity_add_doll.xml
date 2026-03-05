@@ -40,19 +40,6 @@
             android:layout_height="wrap_content"
             android:hint="Enter Doll Name" />
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Hint:"
-            android:layout_marginTop="8dp"
-            android:textStyle="bold" />
-
-        <EditText
-            android:id="@+id/hintInput"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Quick reference (Optional)" />
-
         <Button
             android:id="@+id/saveButton"
             android:layout_width="match_parent"

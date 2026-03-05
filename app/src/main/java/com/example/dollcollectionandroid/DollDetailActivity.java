@@ -12,7 +12,7 @@ import java.io.File;
 
 public class DollDetailActivity extends AppCompatActivity {
     // Use TextField (EditText) for everything you want the user to be able to edit
-    private EditText detailName, hintField, descriptionArea, brandField, modelField, yearField;
+    private EditText detailName, brandField, modelField, yearField, genderField, descriptionArea;
     private EditText birthDateField, birthTimeField;
     private AutoCompleteTextView birthPlaceField;
     private java.util.Calendar birthCalendar = java.util.Calendar.getInstance();
@@ -50,16 +50,30 @@ public class DollDetailActivity extends AppCompatActivity {
         detailName = findViewById(R.id.detailName);
         brandField = findViewById(R.id.brandField);
         modelField = findViewById(R.id.modelField);
-        descriptionArea = findViewById(R.id.descriptionArea);
         yearField = findViewById(R.id.yearField);
-        hintField = findViewById(R.id.hintField);
+        descriptionArea = findViewById(R.id.descriptionArea);
+        genderField = findViewById(R.id.genderField);
 
-        // the date and time and city complex inputs are received here
+        // the date and time complex inputs are received here
         birthDateField = findViewById(R.id.birthDateField);
         birthTimeField = findViewById(R.id.birthTimeField);
-        birthPlaceField = findViewById(R.id.birthPlaceField);
         birthDateField.setOnClickListener(v -> showDateSpinner());    // 3 scrolls of date spinner
         birthTimeField.setOnClickListener(v -> showTimeSpinner());    // 2 scrolls time spinner
+
+        // This listener clears the field entirely when the user clicks/focuses on it
+        android.view.View.OnFocusChangeListener clearOnFocus = (v, hasFocus) -> {
+            if (hasFocus && v instanceof EditText) {
+                ((EditText) v).setText("");    // if hasFocus is true, set TextView to ""
+            }
+        };
+
+        // Apply the auto-clear behavior with OnFocusChangeListener clearOnFocus
+        detailName.setOnFocusChangeListener(clearOnFocus);
+        brandField.setOnFocusChangeListener(clearOnFocus);
+        modelField.setOnFocusChangeListener(clearOnFocus);
+        yearField.setOnFocusChangeListener(clearOnFocus);
+        // do NOT apply this to descriptionArea, we can lose long notes by accident
+        genderField.setOnFocusChangeListener(clearOnFocus);
     }
 
     // this method handles FORMATTING, change according to user demand
@@ -143,16 +157,14 @@ public class DollDetailActivity extends AppCompatActivity {
         if (currentDoll != null) {
             // Filling all fields from the currentDoll object
             detailName.setText(currentDoll.getName());
-            hintField.setText(currentDoll.getHint());
-            descriptionArea.setText(currentDoll.getDescription());
             brandField.setText(currentDoll.getBrand());
             modelField.setText(currentDoll.getModel());
             yearField.setText(String.valueOf(currentDoll.getYear()));    // Convert int to String for the UI
+            descriptionArea.setText(currentDoll.getDescription());
 
             // Load the new Natal Chart fields into the UI
             birthDateField.setText(currentDoll.getBirthDate());
             birthTimeField.setText(currentDoll.getBirthTime());
-            birthPlaceField.setText(currentDoll.getBirthCity());
             // Latitude and Longitude are hidden/internal for now
 
             // Again we use path of folder closet to load Doll image in detail window
@@ -186,24 +198,19 @@ public class DollDetailActivity extends AppCompatActivity {
         } catch (NumberFormatException e) {
             System.out.println("Year was not a number, defaulting to 0");
         }
-        String newHint = hintField.getText().toString();
+        String newGender = genderField.getText().toString();
         String newDate = birthDateField.getText().toString();
         String newTime = birthTimeField.getText().toString();
-        String newCity = birthPlaceField.getText().toString();
-        // keep old coordinates for now, until we add API!!!!
-        double currentLat = currentDoll.getLatitude();     // keep old coordinates for now, until we add API!!!!
-        double currentLon = currentDoll.getLongitude();    // keep old coordinates for now, until we add API!!!!
 
         // 2. Use setters to set variables of Java Doll Object in memory
         currentDoll.setName(newName);
         currentDoll.setBrand(newBrand);
         currentDoll.setModel(newModel);
-        currentDoll.setDescription(newDesc);
         currentDoll.setYear(newYear);
-        currentDoll.setHint(newHint);
+        currentDoll.setDescription(newDesc);
+        currentDoll.setGender(newGender);
         currentDoll.setBirthDate(newDate);
         currentDoll.setBirthTime(newTime);
-        currentDoll.setBirthCity(newCity);
 
         // 3. Use DataBaseManager to save every change with SQL to closet.db
         dbManager.updateFullDollDetails(
@@ -212,14 +219,11 @@ public class DollDetailActivity extends AppCompatActivity {
                 newName,
                 newBrand,
                 newModel,
-                newDesc,
                 newYear,
-                newHint,
+                newDesc,
+                newGender,
                 newDate,
-                newTime,
-                newCity,
-                currentLat,
-                currentLon
+                newTime
         );
 
         System.out.println("Success: Entire profile updated in SQL.");
@@ -231,11 +235,12 @@ public class DollDetailActivity extends AppCompatActivity {
     private void handleClearAllFields() {
         // Decide on what to clear (for now all except name)
         detailName.setText("");
-        hintField.setText("");
-        descriptionArea.setText("");
         brandField.setText("");
         modelField.setText("");
         yearField.setText("");
+        descriptionArea.setText("");
+        genderField.setText("");
+
 
         System.out.println("Visual area cleared. Object remains unchanged until Save is clicked.");
     }

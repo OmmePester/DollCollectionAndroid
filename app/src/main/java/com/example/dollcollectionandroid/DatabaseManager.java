@@ -15,8 +15,8 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     // This tells Java where the file is (Android handles the path internally)
     private static final String DATABASE_NAME = "closet.db";
-    // Version increased to 2 to add new columns (Date, Time, City)
-    private static final int DATABASE_VERSION = 2;
+    // Version increased to 3 to add new columns (Date and Time), and change hint to gender
+    private static final int DATABASE_VERSION = 3;
     private Context myContext;
 
     public DatabaseManager(Context context) {
@@ -26,7 +26,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     @Override
     public void onCreate(SQLiteDatabase db) {
-        // STRICT ORDER: ID, Path, Name, Brand, Model, Desc, Year, Hint, Date, Time, City, Lat, Long
+        // STRICT ORDER: ID, Path, Name, Brand, Model, Year, Desc, Gender, Date, Time
         // ALL COLUMNS ARE NOT NULL
         String createTable = "CREATE TABLE items (" +
                 "id INTEGER PRIMARY KEY AUTOINCREMENT, " +
@@ -34,14 +34,11 @@ public class DatabaseManager extends SQLiteOpenHelper {
                 "name TEXT NOT NULL, " +
                 "brand TEXT NOT NULL, " +
                 "model TEXT NOT NULL, " +
-                "description TEXT NOT NULL, " +
                 "year INTEGER NOT NULL, " +
-                "hint TEXT NOT NULL, " +
+                "description TEXT NOT NULL, " +
+                "gender TEXT NOT NULL, " +
                 "birth_date TEXT NOT NULL, " +
-                "birth_time TEXT NOT NULL, " +
-                "birth_city TEXT NOT NULL, " +
-                "latitude REAL NOT NULL, " +
-                "longitude REAL NOT NULL)";
+                "birth_time TEXT NOT NULL)";
         db.execSQL(createTable);
     }
 
@@ -61,26 +58,21 @@ public class DatabaseManager extends SQLiteOpenHelper {
         // the other values that are initially entered as default values
         values.put("brand", "Unknown");
         values.put("model", "Generic");
-        values.put("description", "");
         values.put("year", 0);
-        values.put("hint", "");
+        values.put("description", "");
+        values.put("gender", "");
         values.put("birth_date", "");
         values.put("birth_time", "");
-        values.put("birth_city", "");
-        values.put("latitude", 0.0);
-        values.put("longitude", 0.0);
 
         long id = db.insert("items", null, values);
         return (int) id; // returns the ID (autoincrement)
     }
 
-    // This saves the real path and hint without touching the Brand/Model defaults.
-    public void completeDollInitialSave(int id, String fileName, String hint) {
+    // This method might e a bit redundant now
+    public void completeDollInitialSave(int id, String fileName) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("image_path", fileName);
-        values.put("hint", hint);
-
         db.update("items", values, "id = ?", new String[]{String.valueOf(id)});
     }
 
@@ -122,34 +114,28 @@ public class DatabaseManager extends SQLiteOpenHelper {
                 cursor.getString(cursor.getColumnIndexOrThrow("name")),
                 cursor.getString(cursor.getColumnIndexOrThrow("brand")),
                 cursor.getString(cursor.getColumnIndexOrThrow("model")),
-                cursor.getString(cursor.getColumnIndexOrThrow("description")),
                 cursor.getInt(cursor.getColumnIndexOrThrow("year")),
-                cursor.getString(cursor.getColumnIndexOrThrow("hint")),
+                cursor.getString(cursor.getColumnIndexOrThrow("description")),
+                cursor.getString(cursor.getColumnIndexOrThrow("gender")),
                 cursor.getString(cursor.getColumnIndexOrThrow("birth_date")),
-                cursor.getString(cursor.getColumnIndexOrThrow("birth_time")),
-                cursor.getString(cursor.getColumnIndexOrThrow("birth_city")),
-                cursor.getDouble(cursor.getColumnIndexOrThrow("latitude")),
-                cursor.getDouble(cursor.getColumnIndexOrThrow("longitude"))
+                cursor.getString(cursor.getColumnIndexOrThrow("birth_time"))
         );
     }
 
     // this method updates Doll variables, which runs in DollDetailActivity
-    public void updateFullDollDetails(int id, String path, String name, String brand, String model, String desc, int year, String hint,
-                                      String bDate, String bTime, String bCity, double lat, double lon) {
+    public void updateFullDollDetails(int id, String path, String name, String brand, String model, int year, String desc,
+                                      String gender, String bDate, String bTime) {
         SQLiteDatabase db = this.getWritableDatabase();
         ContentValues values = new ContentValues();
         values.put("image_path", path);
         values.put("name", name);
         values.put("brand", brand);
         values.put("model", model);
-        values.put("description", desc);
         values.put("year", year);
-        values.put("hint", hint);
+        values.put("description", desc);
+        values.put("gender", gender);
         values.put("birth_date", bDate);
         values.put("birth_time", bTime);
-        values.put("birth_city", bCity);
-        values.put("latitude", lat);
-        values.put("longitude", lon);
 
         db.update("items", values, "id = ?", new String[]{String.valueOf(id)});
     }
