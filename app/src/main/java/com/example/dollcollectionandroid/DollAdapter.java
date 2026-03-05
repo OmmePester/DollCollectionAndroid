@@ -48,8 +48,8 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         // using GLIDE CLASS to fix weird rotations and clearing cache, because otherwise it shows ghost files!!!!
         if (imgFile.exists()) {
             // calculating limits: Width is 1.5x larger, Height is limited to 2x Width
-            int targetWidthPx = (int) (100 * context.getResources().getDisplayMetrics().density);
-            int maxHeightPx = (int) (targetWidthPx * 0.5);
+            int targetWidthPx = (int) (75 * context.getResources().getDisplayMetrics().density);
+            int maxHeightPx = (int) (targetWidthPx * 1.333);
             //
             Glide.with(context)
                     .load(imgFile)
