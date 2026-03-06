@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;    // for Streams
+import java.util.Comparator;           // for Streams
 
 
 public class CollectionActivity extends AppCompatActivity {
@@ -144,31 +146,15 @@ public class CollectionActivity extends AppCompatActivity {
 
     // this is where search and/or filters actually do their work on the Doll list
     private void applyFilters() {
-        String newVal = searchField.getText().toString(); // Your variable name style [cite: 2026-03-01]
-        List<Doll> filtered = new ArrayList<>();
+        final String searchVal = searchField.getText().toString().toLowerCase();
 
-        for (Doll doll : allDolls) {
-            // --- YOUR SEARCH LOGIC --- [cite: 2026-03-01]
-            boolean matchesSearch = true;
-            if (newVal != null && newVal.length() >= 1) {
-                matchesSearch = doll.getName().toLowerCase().startsWith(newVal.toLowerCase());
-            }
-
-            // --- MY FILTER LOGIC (Combined Brand and Model) --- [cite: 2026-03-01]
-            boolean matchesBrand = currentBrandFilter.equals("All") ||
-                    (doll.getBrand() != null && doll.getBrand().equals(currentBrandFilter));
-
-            boolean matchesModel = currentModelFilter.equals("All") ||
-                    (doll.getModel() != null && doll.getModel().equals(currentModelFilter));
-
-            //
-            if (matchesSearch && matchesBrand && matchesModel) {
-                filtered.add(doll);
-            }
-        }
-
-        // Apply sorting to the final filtered list before showing it [cite: 2026-03-04]
-        applySorting(filtered);
+        // One-stop shop: Streams handle filtering and sorting in one efficient pipeline [cite: 2026-03-06]
+        List<Doll> filtered = allDolls.stream()
+                .filter(doll -> searchVal.isEmpty() || doll.getName().toLowerCase().startsWith(searchVal))
+                .filter(doll -> currentBrandFilter.equals("All") || (doll.getBrand() != null && doll.getBrand().equals(currentBrandFilter)))
+                .filter(doll -> currentModelFilter.equals("All") || (doll.getModel() != null && doll.getModel().equals(currentModelFilter)))
+                .sorted(getOptimalComparator())
+                .collect(Collectors.toList());
 
         // Update list and refresh view to see the changes [cite: 2026-02-22]
         adapter.updateList(filtered);
@@ -192,41 +178,36 @@ public class CollectionActivity extends AppCompatActivity {
                 }).show();
     }
 
-    //
-    private void applySorting(List<Doll> list) {
-        if (currentSortMode.equals("None")) return;
+    //this is helper method that gives Comparator based on our selection
+    private Comparator<Doll> getOptimalComparator() {
+        if (currentSortMode.equals("None")) return (d1, d2) -> 0;
 
-        java.util.Collections.sort(list, (d1, d2) -> {
-            int result = 0;
-            switch (currentSortMode) {
-                case "Name (A-Z)":
-                    result = d1.getName().compareToIgnoreCase(d2.getName());
-                    break;
-                case "Name (Z-A)":
-                    result = d2.getName().compareToIgnoreCase(d1.getName());
-                    break;
-                case "Year (Oldest)":
-                    result = Integer.compare(d1.getYear(), d2.getYear());
-                    if (result == 0) result = d1.getName().compareToIgnoreCase(d2.getName()); // Tie-breaker [cite: 2026-03-04]
-                    break;
-                case "Year (Newest)":
-                    result = Integer.compare(d2.getYear(), d1.getYear());
-                    if (result == 0) result = d1.getName().compareToIgnoreCase(d2.getName()); // Tie-breaker [cite: 2026-03-04]
-                    break;
-                case "Date (Oldest)":
-                case "Date (Newest)":
-                    // Parse "dd/MM/yyyy" for comparison [cite: 2026-03-04]
-                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.UK);
-                    try {
-                        java.util.Date date1 = sdf.parse(d1.getBirthDate());
-                        java.util.Date date2 = sdf.parse(d2.getBirthDate());
-                        result = currentSortMode.contains("Oldest") ? date1.compareTo(date2) : date2.compareTo(date1);
-                    } catch (Exception e) { result = 0; }
-                    if (result == 0) result = d1.getName().compareToIgnoreCase(d2.getName()); // Tie-breaker [cite: 2026-03-04]
-                    break;
-            }
-            return result;
-        });
+        Comparator<Doll> comp;
+        switch (currentSortMode) {
+            case "Name (A-Z)":
+                return Comparator.comparing(Doll::getName, String.CASE_INSENSITIVE_ORDER);
+            case "Name (Z-A)":
+                return Comparator.comparing(Doll::getName, String.CASE_INSENSITIVE_ORDER).reversed();
+            case "Year (Oldest)":
+                comp = Comparator.comparingInt(Doll::getYear);
+                break;
+            case "Year (Newest)":
+                comp = Comparator.comparingInt(Doll::getYear).reversed();
+                break;
+            case "Date (Oldest)":
+            case "Date (Newest)":
+                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.UK);
+                comp = Comparator.comparing(doll -> {
+                    try { return sdf.parse(doll.getBirthDate()); }
+                    catch (Exception e) { return new java.util.Date(0); }
+                });
+                if (currentSortMode.contains("Newest")) comp = comp.reversed();
+                break;
+            default:
+                return (d1, d2) -> 0;
+        }
+        // Always fallback to Alphabetical if primary sort (Date/Year) is a tie [cite: 2026-03-04]
+        return comp.thenComparing(Doll::getName, String.CASE_INSENSITIVE_ORDER);
     }
 
     // This makes the top bar back arrow work [cite: 2026-03-01]
