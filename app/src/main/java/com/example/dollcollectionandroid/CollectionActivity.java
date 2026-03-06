@@ -29,6 +29,8 @@ public class CollectionActivity extends AppCompatActivity {
     // [MY ADDITION: Variables to track current filter state, like your JavaFX MenuButton text]
     private EditText searchField;
     private Button filterButton; // Renamed from local to class variable to update text
+    private Button sortButton;
+    private String currentSortMode = "None";    // sets initial sort type to none, and saves selected type here
     private String currentBrandFilter = "All";
     private String currentModelFilter = "All";
 
@@ -52,6 +54,8 @@ public class CollectionActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
 
         filterButton = findViewById(R.id.filterButton); // Link to class variable
+        sortButton = findViewById(R.id.sortButton);
+        sortButton.setOnClickListener(v -> showSortDialog());    // Setup sort listener
         searchField = findViewById(R.id.searchField);
         FloatingActionButton addFab = findViewById(R.id.addDollFab);
 
@@ -85,7 +89,7 @@ public class CollectionActivity extends AppCompatActivity {
         });
     }
 
-    // this is a cascading suggestions like setupFilterMenu()]
+    // this method shows cascading dialog suggestions for filtering
     private void showFilterDialog() {
         String[] initialOptions = {"Brand", "Model", "Clear All Filters"};
 
@@ -106,7 +110,7 @@ public class CollectionActivity extends AppCompatActivity {
         builder.show();
     }
 
-    // this shows the specific unique values for the chosen category after showFilterDialogue()
+    // this method shows distinct values of chosen category from showFilterDialogue()
     private void showSubFilterDialog(String type) {
         Set<String> uniqueValues = new HashSet<>();
         for (Doll d : allDolls) {
@@ -163,8 +167,66 @@ public class CollectionActivity extends AppCompatActivity {
             }
         }
 
+        // Apply sorting to the final filtered list before showing it [cite: 2026-03-04]
+        applySorting(filtered);
+
         // Update list and refresh view to see the changes [cite: 2026-02-22]
         adapter.updateList(filtered);
+    }
+
+    // this method shows cascading dialog suggestions for sorting
+    private void showSortDialog() {
+        String[] options = {
+                "None",
+                "Name (A-Z)", "Name (Z-A)",
+                "Date (Oldest)", "Date (Newest)",
+                "Year (Oldest)", "Year (Newest)"
+        };
+
+        new AlertDialog.Builder(this)
+                .setTitle("Sort By:")
+                .setItems(options, (dialog, which) -> {
+                    currentSortMode = options[which];
+                    sortButton.setText("Sort: " + currentSortMode);
+                    applyFilters();    // Re-apply everything with new sort
+                }).show();
+    }
+
+    //
+    private void applySorting(List<Doll> list) {
+        if (currentSortMode.equals("None")) return;
+
+        java.util.Collections.sort(list, (d1, d2) -> {
+            int result = 0;
+            switch (currentSortMode) {
+                case "Name (A-Z)":
+                    result = d1.getName().compareToIgnoreCase(d2.getName());
+                    break;
+                case "Name (Z-A)":
+                    result = d2.getName().compareToIgnoreCase(d1.getName());
+                    break;
+                case "Year (Oldest)":
+                    result = Integer.compare(d1.getYear(), d2.getYear());
+                    if (result == 0) result = d1.getName().compareToIgnoreCase(d2.getName()); // Tie-breaker [cite: 2026-03-04]
+                    break;
+                case "Year (Newest)":
+                    result = Integer.compare(d2.getYear(), d1.getYear());
+                    if (result == 0) result = d1.getName().compareToIgnoreCase(d2.getName()); // Tie-breaker [cite: 2026-03-04]
+                    break;
+                case "Date (Oldest)":
+                case "Date (Newest)":
+                    // Parse "dd/MM/yyyy" for comparison [cite: 2026-03-04]
+                    java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.UK);
+                    try {
+                        java.util.Date date1 = sdf.parse(d1.getBirthDate());
+                        java.util.Date date2 = sdf.parse(d2.getBirthDate());
+                        result = currentSortMode.contains("Oldest") ? date1.compareTo(date2) : date2.compareTo(date1);
+                    } catch (Exception e) { result = 0; }
+                    if (result == 0) result = d1.getName().compareToIgnoreCase(d2.getName()); // Tie-breaker [cite: 2026-03-04]
+                    break;
+            }
+            return result;
+        });
     }
 
     // This makes the top bar back arrow work [cite: 2026-03-01]

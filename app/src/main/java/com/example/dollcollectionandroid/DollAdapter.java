@@ -50,10 +50,10 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
             // calculating limits: Width is 1.5x larger, Height is limited to 2x Width
             int targetWidthPx = (int) (75 * context.getResources().getDisplayMetrics().density);
             int maxHeightPx = (int) (targetWidthPx * 1.333);
-            //
+            // override() might be deleted, but it helps to reduce processed data, by looking at smaller images
             Glide.with(context)
                     .load(imgFile)
-                    .override(targetWidthPx, maxHeightPx)    //
+                    .override(targetWidthPx, maxHeightPx)
                     .fitCenter()
                     .skipMemoryCache(true)                        // skip short term memory RAM cache
                     .diskCacheStrategy(DiskCacheStrategy.NONE)    // skip long term memory
