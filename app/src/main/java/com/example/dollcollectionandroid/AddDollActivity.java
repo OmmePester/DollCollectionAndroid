@@ -80,11 +80,11 @@ public class AddDollActivity extends AppCompatActivity {
         String fileName = "doll_" + newId + ".jpg";
 
         try {
-            // creating 'closet' subfolder if it doesn't exist
-            File closetFolder = new File(getFilesDir(), "closet");
-            if (!closetFolder.exists()) {
-                closetFolder.mkdirs();
-            }
+            // creating 'closet' subfolder in hidden root 'closetDollUp' folder if it doesn't exist
+            File closetFolder = new File(StorageHelper.getHiddenFolder(), "closet");
+//            if (!closetFolder.exists()) {
+//                closetFolder.mkdirs();
+//            }
 
             // preparing physical file inside 'closet' folder
             File closetFile = new File(closetFolder, fileName);

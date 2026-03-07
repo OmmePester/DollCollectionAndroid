@@ -20,8 +20,9 @@ public class DatabaseManager extends SQLiteOpenHelper {
     private Context myContext;
 
     public DatabaseManager(Context context) {
-        super(context, DATABASE_NAME, null, DATABASE_VERSION);
-        this.myContext = context;
+    // We call StorageHelper to get the path in the hidden .closetDollUp folder
+//        super(context, StorageHelper.getDatabasePath(), null,
+        super(context, StorageHelper.getDatabasePath(context), null, DATABASE_VERSION);        this.myContext = context; // Kept intact as requested!
     }
 
     @Override
@@ -181,4 +182,30 @@ public class DatabaseManager extends SQLiteOpenHelper {
             }
         }
     }
+
+
+
+//    // NEW DELETE ALL FOR LOCAL HIDDEN STORAGE
+//    //======== THE INSERTION STARTS =======
+//    // Updated WipeOut to clean the new hidden folder [cite: 2026-02-22]
+//    public void fullWipeOut() {
+//        SQLiteDatabase db = this.getWritableDatabase();
+//        db.delete("items", null, null);
+//        db.delete("sqlite_sequence", "name='items'", null);
+//
+//        // Now cleaning the new persistent hidden folder
+//        java.io.File closetFolder = StorageHelper.getHiddenFolder();
+//        if (closetFolder.exists()) {
+//            java.io.File[] files = closetFolder.listFiles();
+//            if (files != null) {
+//                for (java.io.File file : files) {
+//                    // Safety check: only delete doll images, keep .nomedia
+//                    if (file.getName().startsWith("doll_")) {
+//                        file.delete();
+//                    }
+//                }
+//            }
+//        }
+//    }
+////======== THE INSERTION ENDS ============
 }

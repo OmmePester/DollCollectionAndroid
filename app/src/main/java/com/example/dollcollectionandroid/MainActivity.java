@@ -2,8 +2,14 @@ package com.example.dollcollectionandroid;
 
 import android.content.Intent;
 import android.os.Bundle;
-import android.widget.Button;
 import androidx.appcompat.app.AppCompatActivity;
+// for getting permission to external hidden files
+import android.Manifest;
+import android.content.pm.PackageManager;
+import android.os.Build;
+import androidx.core.app.ActivityCompat;
+import androidx.core.content.ContextCompat;
+
 
 public class MainActivity extends AppCompatActivity {
 
@@ -15,6 +21,10 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         //
         setContentView(R.layout.activity_main);
+
+        // PERMISSION!!!
+        // request permission
+        checkStoragePermissions();
 
         // INITIALIZE DATABASE [cite: 2026-02-22]
         dbManager = new DatabaseManager(this);
@@ -43,5 +53,20 @@ public class MainActivity extends AppCompatActivity {
             System.out.println("Exiting App...");
             finishAffinity(); // Kills the activity stack and exits [cite: 2026-03-01]
         });
+    }
+
+    // this is helper method for requesting permission
+    private void checkStoragePermissions() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            // Android 13+ logic
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_IMAGES}, 101);
+            }
+        } else {
+            // Android 12 and below logic
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 101);
+            }
+        }
     }
 }

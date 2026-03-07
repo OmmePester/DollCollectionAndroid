@@ -167,9 +167,11 @@ public class DollDetailActivity extends AppCompatActivity {
             birthTimeField.setText(currentDoll.getBirthTime());
             // Latitude and Longitude are hidden/internal for now
 
-            // Again we use path of folder closet to load Doll image in detail window
-            File closetFolder = new File(getFilesDir(), "closet");
-            File imgFile = new File(closetFolder, currentDoll.getImagePath());
+            // path to load Doll image from persistent hidden folder
+            File imgFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
+//            File closetFolder = new File(StorageHelper.getHiddenFolder(), "closet");
+//            File imgFile = new File(closetFolder, currentDoll.getImagePath());
+
             if (imgFile.exists()) {
                 Glide.with(this)
                         .load(imgFile)
@@ -306,9 +308,10 @@ public class DollDetailActivity extends AppCompatActivity {
 
     // Doll Deleting Method (Step 3), actually deleting from everywhere
     private void terminateDoll() {
-        // firstly point to folder 'closet', then get image path
-        File closetFolder = new File(getFilesDir(), "closet");
-        File fileToDelete = new File(closetFolder, currentDoll.getImagePath());
+        // Find the physical file in the hidden folder to delete it
+        File fileToDelete = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
+//        File closetFolder = new File(StorageHelper.getHiddenFolder(), "closet");
+//        File fileToDelete = new File(closetFolder, currentDoll.getImagePath());
 
         if (fileToDelete.exists()) {
             if (fileToDelete.delete()) {

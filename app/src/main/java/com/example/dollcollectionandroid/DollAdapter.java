@@ -41,9 +41,10 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         holder.nameLabel.setText(displayName);
         holder.numberLabel.setText((position + 1) + ".");
 
-        // adding the path to "closet" folder here
-        File closetFolder = new File(context.getFilesDir(), "closet");
-        File imgFile = new File(closetFolder, doll.getImagePath());
+        // adding the path to "closet" folder that is inside hidden folder
+        File imgFile = new File(StorageHelper.getHiddenFolder(), "closet/" + doll.getImagePath());
+//        File closetFolder = new File(StorageHelper.getHiddenFolder(), "closet");
+//        File imgFile = new File(closetFolder, doll.getImagePath());
 
         // using GLIDE CLASS to fix weird rotations and clearing cache, because otherwise it shows ghost files!!!!
         if (imgFile.exists()) {
