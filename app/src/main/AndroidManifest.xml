@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="28" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.INTERNET" />
 
     <application
         android:requestLegacyExternalStorage="true"
@@ -41,6 +42,11 @@
             android:name=".DollDetailActivity"
             android:label="Doll Profile"
             android:parentActivityName=".CollectionActivity" />
+
+        <activity
+            android:name=".SettingsActivity"
+            android:label="Settings &amp; Sync"
+            android:parentActivityName=".MainActivity" />
 
     </application>
 

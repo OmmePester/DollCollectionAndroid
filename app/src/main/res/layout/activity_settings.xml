@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:gravity="center_horizontal"
+    android:background="#F8F9FA">
+
+    <TextView
+        android:id="@+id/tvSettingsTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Cloud Settings"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        android:layout_marginBottom="30dp"
+        android:textColor="#333333" />
+
+    <TextView
+        android:id="@+id/tvCloudStatus"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Status: Not Connected"
+        android:textSize="16sp"
+        android:layout_marginBottom="40dp"
+        android:textColor="#666666" />
+
+    <Button
+        android:id="@+id/btnConnectGoogle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Connect Google Account"
+        android:layout_marginBottom="15dp"
+        android:backgroundTint="#4285F4"
+        android:textColor="#FFFFFF" />
+
+    <Button
+        android:id="@+id/btnSyncNow"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Sync To Cloud Now"
+        android:backgroundTint="#34A853"
+        android:textColor="#FFFFFF" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="Syncing will backup your .closet folder"
+        android:textSize="12sp"
+        android:textColor="#999999" />
+
+</LinearLayout>

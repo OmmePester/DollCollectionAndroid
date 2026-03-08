@@ -33,6 +33,16 @@ android {
         sourceCompatibility = JavaVersion.VERSION_11
         targetCompatibility = JavaVersion.VERSION_11
     }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/DEPENDENCIES"
+            excludes += "/META-INF/LICENSE*"
+            excludes += "/META-INF/NOTICE*"
+            excludes += "/META-INF/ASL2.0"
+        }
+    }
+
 }
 
 dependencies {
@@ -43,4 +53,10 @@ dependencies {
     testImplementation(libs.junit)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
-    implementation("com.github.bumptech.glide:glide:4.16.0")}
+    // Glide which solves weird rotation problems of images
+    implementation("com.github.bumptech.glide:glide:4.16.0")
+    // Google Sign-In library
+    implementation("com.google.android.gms:play-services-auth:21.0.0")
+    // Google Drive API libraries
+    implementation("com.google.api-client:google-api-client-android:2.2.0")
+    implementation("com.google.apis:google-api-services-drive:v3-rev20230822-2.0.0")}

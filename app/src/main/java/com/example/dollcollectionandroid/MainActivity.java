@@ -35,23 +35,24 @@ public class MainActivity extends AppCompatActivity {
         // ============================================================
 //         dbManager.fullWipeOut();
 
-        // 1. VIEW COLLECTION: Redirects to the CollectionActivity window [cite: 2026-03-01]
+        // 1. VIEW COLLECTION: Redirects to the CollectionActivity window
         findViewById(R.id.btnViewCollection).setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, CollectionActivity.class);
             startActivity(intent);
-            System.out.println("Navigating to Collection Activity");
+            //System.out.println("Navigating to Collection Activity");
         });
 
-        // 2. SETTINGS: Currently a placeholder per your design [cite: 2026-03-01]
+        // 2. SETTINGS: Redirects to the SettingsActivity window
         findViewById(R.id.btnSettings).setOnClickListener(v -> {
-            // Logic for settings will go here later
-            System.out.println("Settings clicked - Placeholder only");
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
+            //System.out.println("Navigating to Settings Activity");
         });
 
-        // 3. EXIT: Closes the app completely [cite: 2026-03-01]
+        // 3. EXIT: Closes the app completely
         findViewById(R.id.btnExit).setOnClickListener(v -> {
             System.out.println("Exiting App...");
-            finishAffinity(); // Kills the activity stack and exits [cite: 2026-03-01]
+            finishAffinity(); // Kills the activity stack and exits
         });
     }
 
