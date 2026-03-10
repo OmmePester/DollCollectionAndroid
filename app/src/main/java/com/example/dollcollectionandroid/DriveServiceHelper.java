@@ -47,4 +47,32 @@ public class DriveServiceHelper {
             return googleFile.getId();
         });
     }
+
+    /**
+     * Finds the latest backup file in the hidden appDataFolder.
+     */
+    public Task<String> findLatestBackup() {
+        return Tasks.call(mExecutor, () -> {
+            com.google.api.services.drive.model.FileList result = mDriveService.files().list()
+                    .setSpaces("appDataFolder")
+                    .setFields("files(id, name, createdTime)")
+                    .execute();
+
+            if (result.getFiles().isEmpty()) return null;
+            // Simply returns the ID of the first file found (usually the latest)
+            return result.getFiles().get(0).getId();
+        });
+    }
+
+    /**
+     * Downloads a file from Drive and saves it to a local File path.
+     */
+    public Task<Void> downloadFile(String fileId, java.io.File targetFile) {
+        return Tasks.call(mExecutor, () -> {
+            try (java.io.OutputStream outputStream = new java.io.FileOutputStream(targetFile)) {
+                mDriveService.files().get(fileId).executeMediaAndDownloadTo(outputStream);
+                return null;
+            }
+        });
+    }
 }

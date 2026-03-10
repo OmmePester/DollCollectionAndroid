@@ -257,50 +257,46 @@ public class DollDetailActivity extends AppCompatActivity {
                 .show();
     }
 
-    // Doll Deleting Method (Step 2) - Centered Edition [cite: 2026-03-01]
+    // Doll Deleting Method (Step 2)
     private void triggerSecurityChallenge() {
         // Generate the random 6-digit code
         String securityCode = String.valueOf(new java.util.Random().nextInt(900000) + 100000);
-
-        // 1. Setup the Input Field [cite: 2026-02-22]
+        // arranges input of security code, it is FINAL!!!! because of lambda input being final rule!!!!
         final EditText input = new EditText(this);
-        input.setGravity(android.view.Gravity.CENTER); // Centers the typing cursor [cite: 2026-03-01]
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER); // Opens number pad automatically [cite: 2026-03-01]
-
-        // 2. Setup the Container with proper margins so the line isn't "ugly" [cite: 2026-03-01]
+        // limits input to only 6 chars, as it is intended
+        input.setFilters(new android.text.InputFilter[] {
+                new android.text.InputFilter.LengthFilter(6)
+        });
+        input.setGravity(android.view.Gravity.CENTER);    // typed input is centered
+        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);    // keyboard is number pad :)
         android.widget.LinearLayout container = new android.widget.LinearLayout(this);
         container.setOrientation(android.widget.LinearLayout.VERTICAL);
         android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
                 android.view.ViewGroup.LayoutParams.MATCH_PARENT,
                 android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-        );
-        params.setMargins(80, 20, 80, 40); // Left, Top, Right, Bottom margins [cite: 2026-03-01]
+        );    // customization stuff
+        params.setMargins(80, 20, 80, 40);
         input.setLayoutParams(params);
         container.addView(input);
-
-        // 3. Prepare the Styled Message (Bold + Spacing) [cite: 2026-03-01]
-        // We use <br> for lines and <b> for bold because we are using Html.fromHtml next [cite: 2026-03-01]
+        // creates htmlMessage, uses <br> for lines and <b> for bold
         String htmlMessage = "To finalize homicide, enter this code:<br><br><b>" + securityCode + "</b>";
-
-        // 4. Build and Show the Dialog [cite: 2026-03-01]
+        // prepares popup window and popup htmlMessage
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Final Security Protocol")
-                // This line converts the <b> tags into actual bold text on screen [cite: 2026-03-01]
                 .setMessage(android.text.Html.fromHtml(htmlMessage, android.text.Html.FROM_HTML_MODE_LEGACY))
                 .setView(container)
                 .setPositiveButton("Confirm", (d, which) -> {
+                    // verifies entered input
                     if (input.getText().toString().equals(securityCode)) {
-                        terminateDoll(); // Move to Step 3 [cite: 2026-02-22]
+                        // ACTUALLY CALLS METHOD to terminateDoll()
+                        terminateDoll();
                     } else {
                         Toast.makeText(this, "Wrong code. Execution failed.", Toast.LENGTH_SHORT).show();
                     }
                 }).create();
-
+        // runs popup window, shows htmlMessage, causes method to be called
         dialog.show();
-
-        // 5. THE SECRET SAUCE: Force the Message TextView to center [cite: 2026-03-01]
-        // This finds the internal ID that Android uses for the message body and centers it [cite: 2026-03-01]
-        android.widget.TextView messageView = (android.widget.TextView) dialog.findViewById(android.R.id.message);
+        TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) {
             messageView.setGravity(android.view.Gravity.CENTER);
         }

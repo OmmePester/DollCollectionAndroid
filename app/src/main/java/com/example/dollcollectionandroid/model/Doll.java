@@ -1,22 +1,23 @@
 package com.example.dollcollectionandroid.model;
 
 public class Doll {
+
     // VARIABLES
-    private int id;              // added for SQL stuff
+    private int id;              // added for consistent SQL DB operations
     private String imagePath;
     private String name;
     private String brand;
     private String model;
     private int year;
     private String description;
-    private String gender;       // hint becomes gender as hint is useless
-    // extra variables
+    private String gender;
+    // extra variables (can be used for zodiac sign)
     private String birthDate;    // Format: "DD/MM/YYYY"
     private String birthTime;    // Format: "HH:mm" (24h)
 
 
 
-    // CONSTRUCTOR: How we create a new Doll
+    // CONSTRUCTOR:
     public Doll(int id, String imagePath, String name, String brand, String model, int year, String description,
                 String gender, String birthDate, String birthTime) {
         this.id = id;
@@ -33,7 +34,7 @@ public class Doll {
     }
 
 
-    // GETTERS: Used by JavaFX to display the data
+    // GETTERS:
     public int getId() { return id; }
     public String getImagePath() { return imagePath; }
     public String getName() { return name; }
@@ -46,7 +47,7 @@ public class Doll {
     public String getBirthTime() { return birthTime; }
 
 
-    // SETTER: Allows the user to edit the description
+    // SETTERS:
     public void setName(String name) {
         this.name = name;
     }
@@ -67,4 +68,5 @@ public class Doll {
     }
     public void setBirthDate(String birthDate) { this.birthDate = birthDate; }
     public void setBirthTime(String birthTime) { this.birthTime = birthTime; }
+
 }
