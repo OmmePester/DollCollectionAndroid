@@ -14,6 +14,10 @@ import com.example.dollcollectionandroid.model.Doll;
 import java.io.File;
 import java.util.List;
 
+/**
+ *
+ */
+
 public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder> {
 
     private List<Doll> dollList;

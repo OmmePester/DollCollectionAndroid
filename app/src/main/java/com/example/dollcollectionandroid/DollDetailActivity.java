@@ -10,6 +10,10 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.dollcollectionandroid.model.Doll;
 import java.io.File;
 
+/**
+ *
+ */
+
 public class DollDetailActivity extends AppCompatActivity {
     // Use TextField (EditText) for everything you want the user to be able to edit
     private EditText detailName, brandField, modelField, yearField, genderField, descriptionArea;
@@ -91,8 +95,8 @@ public class DollDetailActivity extends AppCompatActivity {
 
         // Apply letter filter to Name, Brand, and Model, comment if not needed!!!!
 //        detailName.setFilters(new InputFilter[]{letterFilter});
-        brandField.setFilters(new InputFilter[]{letterFilter});
-        modelField.setFilters(new InputFilter[]{letterFilter});
+//        brandField.setFilters(new InputFilter[]{letterFilter});
+//        modelField.setFilters(new InputFilter[]{letterFilter});
 
         // Formatter for numbers (max 4 digits for YEAR)
         yearField.setFilters(new InputFilter[]{
@@ -169,8 +173,6 @@ public class DollDetailActivity extends AppCompatActivity {
 
             // path to load Doll image from persistent hidden folder
             File imgFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
-//            File closetFolder = new File(StorageHelper.getHiddenFolder(), "closet");
-//            File imgFile = new File(closetFolder, currentDoll.getImagePath());
 
             if (imgFile.exists()) {
                 Glide.with(this)
@@ -197,8 +199,7 @@ public class DollDetailActivity extends AppCompatActivity {
         int newYear = 0;
         try {
             newYear = Integer.parseInt(yearField.getText().toString());
-        } catch (NumberFormatException e) {
-            System.out.println("Year was not a number, defaulting to 0");
+        } catch (NumberFormatException ignored) {
         }
         String newGender = genderField.getText().toString();
         String newDate = birthDateField.getText().toString();
@@ -228,7 +229,6 @@ public class DollDetailActivity extends AppCompatActivity {
                 newTime
         );
 
-        System.out.println("Success: Entire profile updated in SQL.");
         Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show();
         finish();
     }
@@ -242,9 +242,6 @@ public class DollDetailActivity extends AppCompatActivity {
         yearField.setText("");
         descriptionArea.setText("");
         genderField.setText("");
-
-
-        System.out.println("Visual area cleared. Object remains unchanged until Save is clicked.");
     }
 
     // Doll Deleting Method (Step 1), initial selection, confirming, redirecting to security check
@@ -306,8 +303,6 @@ public class DollDetailActivity extends AppCompatActivity {
     private void terminateDoll() {
         // Find the physical file in the hidden folder to delete it
         File fileToDelete = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
-//        File closetFolder = new File(StorageHelper.getHiddenFolder(), "closet");
-//        File fileToDelete = new File(closetFolder, currentDoll.getImagePath());
 
         if (fileToDelete.exists()) {
             if (fileToDelete.delete()) {

@@ -10,24 +10,33 @@ import android.os.Build;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
 
+/**
+ * This is the main activity. It starts the app.
+ * It initializes DatabaseManager for all future data manipulations.
+ * It handles all critical permissions for accessing hidden folders.
+ * It provides user with navigation menu that has three important Buttons.
+ */
 
 public class MainActivity extends AppCompatActivity {
 
-    // ADDED: The manager variable so the switch works [cite: 2026-02-22]
+    // VARIABLES
     private DatabaseManager dbManager;
 
+    // this startup method runs when user clicks the app icon
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
+        // this is similar to constructor, but with necessary Android functionalities
         super.onCreate(savedInstanceState);
-        //
+
+        // connects with the XML code of this activity
         setContentView(R.layout.activity_main);
 
-        // PERMISSION!!!
-        // request permission
+        // REQUESTS PERMISSIONS!!!
         checkStoragePermissions();
 
-        // INITIALIZE DATABASE [cite: 2026-02-22]
-        dbManager = new DatabaseManager(this);
+        // INITIALIZE DATABASE MANAGER!!!!
+        dbManager = new DatabaseManager(this);    // here we pass our infamous CONTEXT
 
         // ============================================================
         // THE SAFETY SWITCH
@@ -35,36 +44,37 @@ public class MainActivity extends AppCompatActivity {
         // ============================================================
 //         dbManager.fullWipeOut();
 
-        // 1. VIEW COLLECTION: Redirects to the CollectionActivity window
+        // BUTTON VIEW COLLECTION: redirects to CollectionActivity window
+        // finds Button ID in corresponding XML and sets listener for clicks
         findViewById(R.id.btnViewCollection).setOnClickListener(v -> {
+            // creates Intent, which is used to move to other activity
             Intent intent = new Intent(MainActivity.this, CollectionActivity.class);
+            // moves to other activity
             startActivity(intent);
-            //System.out.println("Navigating to Collection Activity");
         });
 
-        // 2. SETTINGS: Redirects to the SettingsActivity window
+        // BUTTON SETTINGS: redirects to SettingsActivity window
         findViewById(R.id.btnSettings).setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             startActivity(intent);
-            //System.out.println("Navigating to Settings Activity");
         });
 
-        // 3. EXIT: Closes the app completely
+        // BUTTON EXIT: closes our app completely
         findViewById(R.id.btnExit).setOnClickListener(v -> {
-            System.out.println("Exiting App...");
-            finishAffinity(); // Kills the activity stack and exits
+            finishAffinity();    // kills this activity
         });
     }
 
-    // this is helper method for requesting permission
+    // this helper method requests permissions
     private void checkStoragePermissions() {
+        // checks version of Android device
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            // Android 13+ logic
+            // for Android 13+: if access not granted -> grant access
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.READ_MEDIA_IMAGES) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.READ_MEDIA_IMAGES}, 101);
             }
         } else {
-            // Android 12 and below logic
+            // for Android 12 and below: if access not granted -> grant access
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
                 ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 101);
             }

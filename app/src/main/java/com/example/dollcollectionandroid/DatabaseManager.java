@@ -11,6 +11,10 @@ import com.example.dollcollectionandroid.model.Doll;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ *
+ */
+
 public class DatabaseManager extends SQLiteOpenHelper {
 
     // This tells Java where the file is (Android handles the path internally)
@@ -21,8 +25,8 @@ public class DatabaseManager extends SQLiteOpenHelper {
 
     public DatabaseManager(Context context) {
     // We call StorageHelper to get the path in the hidden .closetDollUp folder
-//        super(context, StorageHelper.getDatabasePath(), null,
-        super(context, StorageHelper.getDatabasePath(context), null, DATABASE_VERSION);        this.myContext = context; // Kept intact as requested!
+        super(context, StorageHelper.getDatabasePath(context), null, DATABASE_VERSION);
+        this.myContext = context; // Kept intact as requested!
     }
 
     @Override

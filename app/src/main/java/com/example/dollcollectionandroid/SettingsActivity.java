@@ -27,8 +27,16 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * The user interface controller for application configurations and data management.
+ * This activity handles the "Cloud Backup" and "Restore" logic by coordinating
+ * with ZipHelper for file packaging and Google Drive API for remote storage.
+ * It acts as the bridge between the user's interaction and the background storage tasks.
+ */
+
 public class SettingsActivity extends AppCompatActivity {
 
+    // VARIABLES
     private TextView tvStatus;
     private Button btnConnect;       // the SIGN-IN button
     private Button btnSyncNow;       // the UPLOAD button
@@ -36,7 +44,7 @@ public class SettingsActivity extends AppCompatActivity {
     // variables for google drive API
     private GoogleSignInClient mGoogleSignInClient;
     private DriveServiceHelper mDriveServiceHelper;
-    // listener for logging in
+    // listener for logging in, again for API
     private final ActivityResultLauncher<Intent> signInLauncher = registerForActivityResult(
             new ActivityResultContracts.StartActivityForResult(),
             result -> {
