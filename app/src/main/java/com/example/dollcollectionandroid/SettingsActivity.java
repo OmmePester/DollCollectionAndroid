@@ -56,12 +56,14 @@ public class SettingsActivity extends AppCompatActivity {
             }
     );    // it is asynchronous, which keeps the rest of app responsive.
 
-    // this method is architect.
+    // this startup method initializes SettingsActivity.
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);    // standard lifecycle startup
-        setContentView(R.layout.activity_settings);    // connects XML file with this activity
-        // find IDs of XML elements (TextView, Button)
+        // starts standard lifecycle
+        super.onCreate(savedInstanceState);
+        // connects XML file with this activity
+        setContentView(R.layout.activity_settings);
+        // finds IDs of XML elements (TextView, Button)
         tvStatus = findViewById(R.id.tvCloudStatus);
         btnConnect = findViewById(R.id.btnConnectGoogle);
         btnSyncNow = findViewById(R.id.btnSyncNow);
@@ -85,16 +87,16 @@ public class SettingsActivity extends AppCompatActivity {
         if (account == null) {
             tvStatus.setText("Status: Not Connected");
         }
-        // when connect button is clicked, status: connecting
+        // CONNECT Button: listens to clicks and opens log in window
         btnConnect.setOnClickListener(v -> {
             tvStatus.setText("Status: Connecting...");
             signInLauncher.launch(mGoogleSignInClient.getSignInIntent());    // open login popup window
         });
-        // UPLOAD Button: if touched -> security verification check
+        // UPLOAD Button: listens to clicks and runs triggerSecurityChallenge() method
         btnSyncNow.setOnClickListener(v -> {
             triggerSecurityChallenge(true);    // true means, do upload
         });
-        // DOWNLOAD Button: if touched -> security verification check
+        // DOWNLOAD Button: listens to clicks and runs triggerSecurityChallenge() method
         btnRestoreNow.setOnClickListener(v -> {
             triggerSecurityChallenge(false);    // false means, do download
         });

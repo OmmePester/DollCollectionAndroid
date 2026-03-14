@@ -6,7 +6,6 @@
     android:background="#F5F5F5"
     android:paddingTop="64dp">
 
-
 <LinearLayout
 
     android:id="@+id/topBar"
@@ -30,6 +29,7 @@
     <Button
 
         android:id="@+id/sortButton"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Sort"
@@ -38,6 +38,7 @@
     <Button
 
         android:id="@+id/filterButton"
+        style="@style/Widget.AppCompat.Button.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Filter" />

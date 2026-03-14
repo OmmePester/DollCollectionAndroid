@@ -20,36 +20,34 @@ import java.io.InputStream;
 
 public class AddDollActivity extends AppCompatActivity {
 
-    private EditText nameInput;
-    private ImageView dollImageView;
-    private Uri selectedImageUri;
-    private DatabaseManager dbManager;
+    // VARIABLES
+    private EditText nameInput;           // for name input
+    private ImageView dollImageView;      // for viewing selected Image
+    private Uri selectedImageUri;         // for saving Image by URI (Uniform Resource Identifier)
+    private DatabaseManager dbManager;    // for SQL DB
+    private Button saveButton;            // for final data save
 
+    // this startup method initializes AddDollActivity,
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // starts standard lifecycle
         super.onCreate(savedInstanceState);
-        //
+        // connects XML file with this activity
         setContentView(R.layout.activity_add_doll);
-
-        // Enable Back Arrow to return to Collection [cite: 2026-03-01]
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("Add to Closet");
-        }
-
-        dbManager = new DatabaseManager(this);
+        // finds IDs of XML elements (TextView, Button)
         nameInput = findViewById(R.id.nameInput);
         dollImageView = findViewById(R.id.dollImageView);
-        Button saveButton = findViewById(R.id.saveButton);
-
-        // Click the gray box to open phone gallery [cite: 2026-02-22]
+        saveButton = findViewById(R.id.saveButton);
+        // instantiates DatabaseManager for SQL DB operations, passes this activity Context
+        dbManager = new DatabaseManager(this);
+        // listens to click, and opens phone gallery for image selection
         dollImageView.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
             startActivityForResult(intent, 1000);
         });
 
-        // Click the purple button to save [cite: 2026-02-22]
+        // Click the purple button to save
         saveButton.setOnClickListener(v -> saveDollToCloset());
     }
 
@@ -67,6 +65,7 @@ public class AddDollActivity extends AppCompatActivity {
     }
 
     private void saveDollToCloset() {
+        // rejects saving process if there is no image URI or no name input
         if (selectedImageUri == null || nameInput.getText().toString().isEmpty()) {
             Toast.makeText(this, "Please add a name and photo!", Toast.LENGTH_SHORT).show();
             return;
@@ -117,12 +116,5 @@ public class AddDollActivity extends AppCompatActivity {
             e.printStackTrace();
             Toast.makeText(this, "Failed to save image", Toast.LENGTH_SHORT).show();
         }
-    }
-
-    // Handles the top bar back arrow [cite: 2026-03-01]
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish();
-        return true;
     }
 }

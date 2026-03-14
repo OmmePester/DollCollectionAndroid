@@ -1,7 +1,10 @@
 package com.example.dollcollectionandroid;
 
+import android.app.DatePickerDialog;
+import android.app.TimePickerDialog;
 import android.os.Bundle;
 import android.text.InputFilter;
+import android.view.View;
 import android.widget.*;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -9,69 +12,69 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.dollcollectionandroid.model.Doll;
 import java.io.File;
+import java.util.Calendar;
 
 /**
- *
+ * This Class shows Doll detail screen for selected Doll from our collection.
+ * It handles loading and displaying existing Doll data, formatting user input, saving edits to SQL DB,
+ * and executing a secure, fool-proof deletion process to prevent accidental data loss.
  */
 
 public class DollDetailActivity extends AppCompatActivity {
-    // Use TextField (EditText) for everything you want the user to be able to edit
-    private EditText detailName, brandField, modelField, yearField, genderField, descriptionArea;
-    private EditText birthDateField, birthTimeField;
-    private AutoCompleteTextView birthPlaceField;
-    private java.util.Calendar birthCalendar = java.util.Calendar.getInstance();
+    // VARIABLES
     private ImageView detailImage;
+    private EditText detailName, brandField, modelField, yearField, descriptionArea;
+    private EditText genderField, birthDateField, birthTimeField;
+    private Calendar birthCalendar = Calendar.getInstance();
     private DatabaseManager dbManager;
     private int dollId;
-    private Doll currentDoll; // To match your JavaFX 'currentDoll' logic
+    private Doll currentDoll;
 
+    // this startup method initializes DollDetailActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        // starts standard lifecycle
         super.onCreate(savedInstanceState);
+        // connects XML file with this activity
         setContentView(R.layout.activity_doll_detail);
-
+        // instantiates DatabaseManager for SQL DB operations, passes this activity Context
         dbManager = new DatabaseManager(this);
-        // Get the ID passed from the list
+        // gets ID of selected Doll, using Intent created in DollAdapter
         dollId = getIntent().getIntExtra("DOLL_ID", -1);
-
-        initViews();
-        setupFormatters(); //
-        loadDollData();
-
-        // Method that saves fields of detail window
+        // calls necessary methods of this class
+        initViews();          // sets up UI of this activity
+        setupFormatters();    // applies text field restrictions
+        loadDollData();       // loads Doll's data
+        // SAVE BUTTON: listens to clicks and calls handleSaveDescription() method
         findViewById(R.id.btnSave).setOnClickListener(v -> handleSaveDescription());
-
-        // Method that clears fields of detail window
+        // CLEAR FIELDS BUTTON: listens to clicks and calls handleClearAllFields() method
         findViewById(R.id.btnClearFields).setOnClickListener(v -> handleClearAllFields());
-
-        // Doll Deleting Method (Step 1)
+        // DELETE BUTTON: listens to clicks and calls handleDeleteDoll() method
         findViewById(R.id.btnDelete).setOnClickListener(v -> handleDeleteDoll());
     }
 
+    // this method initializes Views/Fields and implements Field clearing
     private void initViews() {
+        // binds variables with XML elements (ImageView, EditText) by ID
         detailImage = findViewById(R.id.detailImage);
-
         detailName = findViewById(R.id.detailName);
         brandField = findViewById(R.id.brandField);
         modelField = findViewById(R.id.modelField);
         yearField = findViewById(R.id.yearField);
         descriptionArea = findViewById(R.id.descriptionArea);
         genderField = findViewById(R.id.genderField);
-
-        // the date and time complex inputs are received here
         birthDateField = findViewById(R.id.birthDateField);
         birthTimeField = findViewById(R.id.birthTimeField);
+        // listens to clicks and runs corresponding spinner methods
         birthDateField.setOnClickListener(v -> showDateSpinner());    // 3 scrolls of date spinner
         birthTimeField.setOnClickListener(v -> showTimeSpinner());    // 2 scrolls time spinner
-
-        // This listener clears the field entirely when the user clicks/focuses on it
-        android.view.View.OnFocusChangeListener clearOnFocus = (v, hasFocus) -> {
+        // listens and clears the field entirely when it is clicked
+        View.OnFocusChangeListener clearOnFocus = (v, hasFocus) -> {
             if (hasFocus && v instanceof EditText) {
-                ((EditText) v).setText("");    // if hasFocus is true, set TextView to ""
+                ((EditText) v).setText("");    // if hasFocus is true, set EditText to ""
             }
         };
-
-        // Apply the auto-clear behavior with OnFocusChangeListener clearOnFocus
+        // applies previously created clearing behavior (behavior parametrization)
         detailName.setOnFocusChangeListener(clearOnFocus);
         brandField.setOnFocusChangeListener(clearOnFocus);
         modelField.setOnFocusChangeListener(clearOnFocus);
@@ -82,130 +85,123 @@ public class DollDetailActivity extends AppCompatActivity {
 
     // this method handles FORMATTING, change according to user demand
     private void setupFormatters() {
-        // Formatter for letters and spaces only (Matches [a-zA-Z\s]*)
+        // creates formatter for letters and spaces only [a-zA-Z\s]
         InputFilter letterFilter = (source, start, end, dest, dstart, dend) -> {
             for (int i = start; i < end; i++) {
-                // If it's not a letter and not a space, return empty string to block it [cite: 2026-03-01]
+                // If it's not a letter and not a space, return empty string
                 if (!Character.isLetter(source.charAt(i)) && !Character.isSpaceChar(source.charAt(i))) {
                     return "";
                 }
             }
-            return null; // Accept the input
+            return null;    // this actually accepts entered input
         };
-
-        // Apply letter filter to Name, Brand, and Model, comment if not needed!!!!
+        // applies letter filter to Name, Brand, and Model, comment if not needed!!!!
 //        detailName.setFilters(new InputFilter[]{letterFilter});
 //        brandField.setFilters(new InputFilter[]{letterFilter});
 //        modelField.setFilters(new InputFilter[]{letterFilter});
-
-        // Formatter for numbers (max 4 digits for YEAR)
+        // creates formatter for numbers (max 4 digits for YEAR)
         yearField.setFilters(new InputFilter[]{
-                new InputFilter.LengthFilter(4), // Max 4 characters [cite: 2026-03-01]
+                new InputFilter.LengthFilter(4),    // max 4 char for Year Field
                 (source, start, end, dest, dstart, dend) -> {
                     for (int i = start; i < end; i++) {
                         if (!Character.isDigit(source.charAt(i))) return "";
                     }
-                    return null;
+                    return null;    // this actually accepts entered input
                 }
         });
     }
 
-    // this method shows three spinner of DatePicker Class
+    // this method shows three spinners of DatePickerDialog
     private void showDateSpinner() {
-        // Get current values from the calendar
-        int year = birthCalendar.get(java.util.Calendar.YEAR);
-        int month = birthCalendar.get(java.util.Calendar.MONTH);
-        int day = birthCalendar.get(java.util.Calendar.DAY_OF_MONTH);
-
-        // Force the Locale to UK just for this dialog to get Day-Month-Year wheel order
+        // gets current values from the calendar related variables
+        int year = birthCalendar.get(Calendar.YEAR);
+        int month = birthCalendar.get(Calendar.MONTH);
+        int day = birthCalendar.get(Calendar.DAY_OF_MONTH);
+        // forces location to UK just for now
         java.util.Locale.setDefault(java.util.Locale.UK);
-
-        android.app.DatePickerDialog datePickerDialog = new android.app.DatePickerDialog(
+        // instantiates DatePickerDialog, passes Context with other necessary parameters
+        DatePickerDialog datePickerDialog = new DatePickerDialog(
                 this,
                 android.R.style.Theme_Holo_Light_Dialog_MinWidth,
                 (view, selectedYear, selectedMonth, selectedDay) -> {
                     birthCalendar.set(selectedYear, selectedMonth, selectedDay);
-
-                    // %02d ensures "07/09" instead of "7/9"
+                    // formats Strings, %02d ensures "07/07" instead of "7/7"
                     String dateStr = String.format("%02d/%02d/%d", selectedDay, (selectedMonth + 1), selectedYear);
                     birthDateField.setText(dateStr);
                 },
                 year, month, day
         );
-
-        // This removes the "Header" date that sometimes messes up the look
-        datePickerDialog.setTitle("Select Birth Date");
-        datePickerDialog.show();
+        datePickerDialog.setTitle("Select Date");    // sets title for dialog
+        datePickerDialog.show();                     // runs this dialog object
     }
 
-    // this method shows two spinner (24-hour format) of TimePicker Class
+    // this method shows two spinner (24-hour format) of TimePickerDialog
     private void showTimeSpinner() {
-        new android.app.TimePickerDialog(this, android.R.style.Theme_Holo_Light_Dialog_MinWidth,
+        // instantiates TimePickerDialog, passes Context with other necessary parameters
+        TimePickerDialog timePickerDialog = new TimePickerDialog(
+                this,
+                android.R.style.Theme_Holo_Light_Dialog_MinWidth,
                 (view, hourOfDay, minute) -> {
                     birthCalendar.set(java.util.Calendar.HOUR_OF_DAY, hourOfDay);
                     birthCalendar.set(java.util.Calendar.MINUTE, minute);
-
+                    // formats Strings, %02d ensures "07/07" instead of "7/7"
                     String timeStr = String.format("%02d:%02d", hourOfDay, minute);
                     birthTimeField.setText(timeStr);
                 },
                 birthCalendar.get(java.util.Calendar.HOUR_OF_DAY),
                 birthCalendar.get(java.util.Calendar.MINUTE),
-                true    // THIS PART FORCES the 24-HOUR FORMAT (2 SCROLLS)
-        ).show();
+                true    // THIS PART FORCES the 24-HOUR FORMAT!!!!
+        );
+        timePickerDialog.setTitle("Select Time");    // sets title for dialog
+        timePickerDialog.show();                     // runs this dialog object
     }
 
+    // this method loads Doll using its ID, then gets all data from already ready Doll
     private void loadDollData() {
-        // Correct way: Ask the dbManager to get the doll by its ID
+        // asks for Doll from DatabaseManager using its ID
         currentDoll = dbManager.getDollById(dollId);
-
         if (currentDoll != null) {
-            // Filling all fields from the currentDoll object
+            // fills all fields from the current Doll object
             detailName.setText(currentDoll.getName());
             brandField.setText(currentDoll.getBrand());
             modelField.setText(currentDoll.getModel());
             yearField.setText(String.valueOf(currentDoll.getYear()));    // Convert int to String for the UI
             descriptionArea.setText(currentDoll.getDescription());
-
-            // Load the new Natal Chart fields into the UI
             birthDateField.setText(currentDoll.getBirthDate());
             birthTimeField.setText(currentDoll.getBirthTime());
-            // Latitude and Longitude are hidden/internal for now
-
-            // path to load Doll image from persistent hidden folder
+            // locates path to current Doll image from hidden folder
             File imgFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
-
             if (imgFile.exists()) {
                 Glide.with(this)
                         .load(imgFile)
-                        .fitCenter()           // show the whole doll without cutting/cropping
+                        .fitCenter()           // shows the whole doll, centered, without cutting/cropping
                         .skipMemoryCache(true)
                         .diskCacheStrategy(DiskCacheStrategy.NONE)
                         .into(detailImage);    // fixing weird rotation with Glide Class
             } else {
-                // If file is missing, clear the view so you don't see a previous doll
+                // if file is missing, clear the view
                 Glide.with(this).clear(detailImage);
             }
         }
     }
 
-    // Method that saves fields of detail window
+    // this method saves field changes of DollDetailActivity window into SQL DB
     private void handleSaveDescription() {
-        // 1. Collect data from UI
+        // collects data from UI
         String newName = detailName.getText().toString();
         String newBrand = brandField.getText().toString();
         String newModel = modelField.getText().toString();
         String newDesc = descriptionArea.getText().toString();
-        // Convert year text to number safely
         int newYear = 0;
         try {
+            // converts year input from String to int
             newYear = Integer.parseInt(yearField.getText().toString());
         } catch (NumberFormatException ignored) {
         }
         String newGender = genderField.getText().toString();
         String newDate = birthDateField.getText().toString();
         String newTime = birthTimeField.getText().toString();
-
-        // 2. Use setters to set variables of Java Doll Object in memory
+        // uses setters to set variables of current Doll
         currentDoll.setName(newName);
         currentDoll.setBrand(newBrand);
         currentDoll.setModel(newModel);
@@ -214,8 +210,7 @@ public class DollDetailActivity extends AppCompatActivity {
         currentDoll.setGender(newGender);
         currentDoll.setBirthDate(newDate);
         currentDoll.setBirthTime(newTime);
-
-        // 3. Use DataBaseManager to save every change with SQL to closet.db
+        // uses DataBaseManager to save changes into closet.db
         dbManager.updateFullDollDetails(
                 currentDoll.getId(),           // redundant but still
                 currentDoll.getImagePath(),    // redundant but still
@@ -228,14 +223,14 @@ public class DollDetailActivity extends AppCompatActivity {
                 newDate,
                 newTime
         );
-
+        // displays small message at the bottom
         Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show();
         finish();
     }
 
-    // Method that clears fields of detail window
+    // this method CLEARS ALL fields of DollDetailActivity window
     private void handleClearAllFields() {
-        // Decide on what to clear (for now all except name)
+        // sets text String to "", effectively clearing Fields
         detailName.setText("");
         brandField.setText("");
         modelField.setText("");

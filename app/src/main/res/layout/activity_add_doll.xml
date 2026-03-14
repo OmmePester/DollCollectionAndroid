@@ -10,6 +10,11 @@
         android:orientation="vertical"
         android:padding="16dp">
 
+<!--    ADDED FOR TOP BAR WITH ARROW, to avoid the overlay    -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="60dp" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

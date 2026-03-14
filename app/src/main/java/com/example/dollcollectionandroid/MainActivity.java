@@ -38,13 +38,7 @@ public class MainActivity extends AppCompatActivity {
         // INITIALIZE DATABASE MANAGER!!!!
         dbManager = new DatabaseManager(this);    // here we pass our infamous CONTEXT
 
-        // ============================================================
-        // THE SAFETY SWITCH
-        // Uncomment to wipe, Comment to save.
-        // ============================================================
-//         dbManager.fullWipeOut();
-
-        // BUTTON VIEW COLLECTION: redirects to CollectionActivity window
+        // VIEW COLLECTION Button: listens to clicks and redirects to CollectionActivity window
         // finds Button ID in corresponding XML and sets listener for clicks
         findViewById(R.id.btnViewCollection).setOnClickListener(v -> {
             // creates Intent, which is used to move to other activity
@@ -52,14 +46,12 @@ public class MainActivity extends AppCompatActivity {
             // moves to other activity
             startActivity(intent);
         });
-
-        // BUTTON SETTINGS: redirects to SettingsActivity window
+        // SETTINGS Button: listens to clicks and redirects to SettingsActivity window
         findViewById(R.id.btnSettings).setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             startActivity(intent);
         });
-
-        // BUTTON EXIT: closes our app completely
+        // EXIT Button: closes our app completely
         findViewById(R.id.btnExit).setOnClickListener(v -> {
             finishAffinity();    // kills this activity
         });

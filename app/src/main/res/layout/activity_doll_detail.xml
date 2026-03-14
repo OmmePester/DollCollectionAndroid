@@ -2,6 +2,7 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
     android:background="#FFFFFF">
 
     <LinearLayout
@@ -9,6 +10,11 @@
         android:layout_height="wrap_content"
         android:orientation="vertical"
         android:padding="20dp">
+
+<!--    ADDED FOR TOP BAR WITH ARROW, to avoid the overlay    -->
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="60dp" />
 
         <ImageView
             android:id="@+id/detailImage"

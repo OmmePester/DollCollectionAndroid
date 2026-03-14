@@ -30,22 +30,22 @@
 
         <activity
             android:name=".CollectionActivity"
-            android:label="My Closet"
+            android:label="@string/title_collection"
             android:parentActivityName=".MainActivity" />
 
         <activity
             android:name=".AddDollActivity"
-            android:label="New Acquisition"
+            android:label="@string/title_add_doll"
             android:parentActivityName=".CollectionActivity" />
 
         <activity
             android:name=".DollDetailActivity"
-            android:label="Doll Profile"
+            android:label="@string/title_doll_detail"
             android:parentActivityName=".CollectionActivity" />
 
         <activity
             android:name=".SettingsActivity"
-            android:label="Settings &amp; Sync"
+            android:label="@string/title_settings"
             android:parentActivityName=".MainActivity" />
 
     </application>

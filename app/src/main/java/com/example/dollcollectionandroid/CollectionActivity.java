@@ -26,10 +26,10 @@ import java.util.Comparator;           // for Streams
 
 public class CollectionActivity extends AppCompatActivity {
 
-    private RecyclerView recyclerView;
-    private DollAdapter adapter;
-    private DatabaseManager dbManager;
-    private List<Doll> allDolls;
+    private RecyclerView recyclerView;    //
+    private DollAdapter adapter;          // DollAdapter that handles Doll display, without bothering DatabaseManager
+    private DatabaseManager dbManager;    // DatabaseManager used only onc to load List of Dolls
+    private List<Doll> allDolls;          //
 
     // [MY ADDITION: Variables to track current filter state, like your JavaFX MenuButton text]
     private EditText searchField;

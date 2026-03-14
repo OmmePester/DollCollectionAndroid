@@ -1,6 +1,7 @@
 package com.example.dollcollectionandroid;
 
 import android.content.Context;
+import android.content.Intent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -69,12 +70,12 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
             holder.dollImage.setImageResource(android.R.color.darker_gray);
         }
 
-        // Handle clicking a doll to open the separate Activity window [cite: 2026-02-22]
+        // listens to doll click to open DollDetailActivity window
         holder.itemView.setOnClickListener(v -> {
             // We use an Intent because DollDetailActivity is a full window, not a fragment
-            android.content.Intent intent = new android.content.Intent(v.getContext(), DollDetailActivity.class);
+            Intent intent = new Intent(v.getContext(), DollDetailActivity.class);
 
-            // Pass the ID using "DOLL_ID" to match what you wrote in the Activity [cite: 2026-02-22]
+            // passes Doll's ID "DOLL_ID" using Intent, which we will use in DollDetailActivity to load Doll's data
             intent.putExtra("DOLL_ID", doll.getId());
 
             v.getContext().startActivity(intent);
