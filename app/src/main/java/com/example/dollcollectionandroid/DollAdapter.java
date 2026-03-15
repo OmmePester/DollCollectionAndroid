@@ -19,6 +19,8 @@ import java.util.List;
  * This Class handles displaying Doll List to UI's RecyclerView.
  * It uses Glide to correctly show Doll images with corresponding data.
  * It attaches listeners to ImageViews to open DollDetailActivity later.
+ * onCreateViewHolder() is similar to a viewed box itself in RecyclerView.
+ * onBindViewHolder() is similar to an inside of viewed box in RecyclerView.
  */
 
 public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder> {
@@ -34,14 +36,14 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
 
     @NonNull
     @Override
-    // this automatic method takes
+    // this automatic method takes 'item_doll' XML layout, applies it to View of Doll, and creates/returns DollViewHolder
     public DollViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_doll, parent, false);
         return new DollViewHolder(view);
     }
 
     @Override
-    // this automatic method takes specific Doll from List and projects its data on existing UI (RecyclerView)
+    // this automatic method takes specific Doll from List and projects its data on existing UI (RecyclerView/DollViewHolder)
     public void onBindViewHolder(@NonNull DollViewHolder holder, int position) {
         // selects specific Doll
         Doll doll = dollList.get(position);
@@ -56,33 +58,34 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         // locates image path, "closet" folder that is inside hidden folder
         File imgFile = new File(StorageHelper.getHiddenFolder(), "closet/" + doll.getImagePath());
 
-        // uses GLIDE Class to fix weird rotations and clearing cache, because otherwise it shows ghost files!!!!
+        // uses Glide to run and display Doll image
         if (imgFile.exists()) {
-            // calculating limits: Width is 1.5x larger, Height is limited to 2x Width
+            // calculates limits: Width is 1.5x larger, Height is limited to 2x Width
             int targetWidthPx = (int) (75 * context.getResources().getDisplayMetrics().density);
             int maxHeightPx = (int) (targetWidthPx * 1.333);
-            // override() might be deleted, but it helps to reduce processed data, by looking at smaller images
+            // uses GLIDE Class to fix weird rotations and clearing cache, because otherwise it shows ghost files!!!!
             Glide.with(context)
                     .load(imgFile)
-                    .override(targetWidthPx, maxHeightPx)
+                    .override(targetWidthPx, maxHeightPx)         // shrinks image and reduces memory usage
                     .fitCenter()
-                    .skipMemoryCache(true)                        // skip short term memory RAM cache
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)    // skip long term memory
-                    .into(holder.dollImage);
+                    .skipMemoryCache(true)                        // skips short term memory RAM cache
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)    // skips long term memory
+                    .into(holder.dollImage);                      // puts image inside ImageView
         } else {
-            // Clear recycled images [cite: 2026-03-03]
+            // clears recycled images
             Glide.with(context).clear(holder.dollImage);
             holder.dollImage.setImageResource(android.R.color.darker_gray);
         }
 
-        // listens to doll click to open DollDetailActivity window
+        // listens to clicks and OPENS DollDetailActivity window!!!!
         holder.itemView.setOnClickListener(v -> {
-            // We use an Intent because DollDetailActivity is a full window, not a fragment
+            // instantiates an Intent because DollDetailActivity is a full window, not a fragment
             Intent intent = new Intent(v.getContext(), DollDetailActivity.class);
 
             // passes Doll's ID "DOLL_ID" using Intent, which we will use in DollDetailActivity to load Doll's data
             intent.putExtra("DOLL_ID", doll.getId());
 
+            // starts activity, DollDetailActivity
             v.getContext().startActivity(intent);
         });
     }
@@ -108,9 +111,11 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
      * a single list row, which prevents heavy findViewById lookups.
      */
     public static class DollViewHolder extends RecyclerView.ViewHolder {
+        // VARIABLES
         TextView nameLabel, numberLabel;
         ImageView dollImage;
 
+        // CONSTRUCTOR
         public DollViewHolder(@NonNull View itemView) {
             super(itemView);
             nameLabel = itemView.findViewById(R.id.nameLabel);
