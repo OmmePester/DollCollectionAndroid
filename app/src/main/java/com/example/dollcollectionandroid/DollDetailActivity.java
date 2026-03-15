@@ -3,8 +3,12 @@ package com.example.dollcollectionandroid;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.os.Bundle;
+import android.text.Html;
 import android.text.InputFilter;
+import android.text.InputType;
+import android.view.Gravity;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.*;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
@@ -81,24 +85,25 @@ public class DollDetailActivity extends AppCompatActivity {
         yearField.setOnFocusChangeListener(clearOnFocus);
         // do NOT apply this to descriptionArea, we can lose long notes by accident
         genderField.setOnFocusChangeListener(clearOnFocus);
+        // do NOT apply this to birthDateField/birthTimeField as well
     }
 
     // this method handles FORMATTING, change according to user demand
     private void setupFormatters() {
-        // creates formatter for letters and spaces only [a-zA-Z\s]
-        InputFilter letterFilter = (source, start, end, dest, dstart, dend) -> {
-            for (int i = start; i < end; i++) {
-                // If it's not a letter and not a space, return empty string
-                if (!Character.isLetter(source.charAt(i)) && !Character.isSpaceChar(source.charAt(i))) {
-                    return "";
-                }
-            }
-            return null;    // this actually accepts entered input
-        };
-        // applies letter filter to Name, Brand, and Model, comment if not needed!!!!
-//        detailName.setFilters(new InputFilter[]{letterFilter});
-//        brandField.setFilters(new InputFilter[]{letterFilter});
-//        modelField.setFilters(new InputFilter[]{letterFilter});
+//        // creates formatter for letters and spaces only [a-zA-Z\s]
+//        InputFilter letterFilter = (source, start, end, dest, dstart, dend) -> {
+//            for (int i = start; i < end; i++) {
+//                // If it's not a letter and not a space, return empty string
+//                if (!Character.isLetter(source.charAt(i)) && !Character.isSpaceChar(source.charAt(i))) {
+//                    return "";
+//                }
+//            }
+//            return null;    // this actually accepts entered input
+//        };
+//        // applies letter filter to Name, Brand, and Model, comment if not needed!!!!
+////        detailName.setFilters(new InputFilter[]{letterFilter});
+////        brandField.setFilters(new InputFilter[]{letterFilter});
+////        modelField.setFilters(new InputFilter[]{letterFilter});
         // creates formatter for numbers (max 4 digits for YEAR)
         yearField.setFilters(new InputFilter[]{
                 new InputFilter.LengthFilter(4),    // max 4 char for Year Field
@@ -167,6 +172,7 @@ public class DollDetailActivity extends AppCompatActivity {
             modelField.setText(currentDoll.getModel());
             yearField.setText(String.valueOf(currentDoll.getYear()));    // Convert int to String for the UI
             descriptionArea.setText(currentDoll.getDescription());
+            genderField.setText(currentDoll.getGender());
             birthDateField.setText(currentDoll.getBirthDate());
             birthTimeField.setText(currentDoll.getBirthTime());
             // locates path to current Doll image from hidden folder
@@ -237,46 +243,38 @@ public class DollDetailActivity extends AppCompatActivity {
         yearField.setText("");
         descriptionArea.setText("");
         genderField.setText("");
+        birthDateField.setText("");    // also these
+        birthTimeField.setText("");    // also these
     }
 
     // Doll Deleting Method (Step 1), initial selection, confirming, redirecting to security check
     private void handleDeleteDoll() {
+        // instantiates dialog Builder object and sets necessary fields
         new AlertDialog.Builder(this)
                 .setTitle("Confirm Murder")
                 .setMessage("Are you sure you want to KILL " + currentDoll.getName() + "????\nThis action is EXTREMELY UNETHICAL!!!!")
                 .setPositiveButton("OK", (dialog, which) -> triggerSecurityChallenge()) // redirecting to security check
-                .setNegativeButton("Cancel", (dialog, which) -> System.out.println("Deletion cancelled at Step 1."))
+                .setNegativeButton("Cancel", (dialog, which) -> System.out.println("Murder Avoided"))
                 .show();
     }
 
-    // Doll Deleting Method (Step 2)
+    // Doll Deleting Method (Step 2), security code and final confirmation
     private void triggerSecurityChallenge() {
-        // Generate the random 6-digit code
+        // generates random 6-digit code String that need to be repeated
         String securityCode = String.valueOf(new java.util.Random().nextInt(900000) + 100000);
-        // arranges input of security code, it is FINAL!!!! because of lambda input being final rule!!!!
-        final EditText input = new EditText(this);
-        // limits input to only 6 chars, as it is intended
-        input.setFilters(new android.text.InputFilter[] {
-                new android.text.InputFilter.LengthFilter(6)
-        });
-        input.setGravity(android.view.Gravity.CENTER);    // typed input is centered
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);    // keyboard is number pad :)
-        android.widget.LinearLayout container = new android.widget.LinearLayout(this);
-        container.setOrientation(android.widget.LinearLayout.VERTICAL);
-        android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-        );    // customization stuff
-        params.setMargins(80, 20, 80, 40);
-        input.setLayoutParams(params);
-        container.addView(input);
+
+        // inflates XML layout instead of coding it in Java
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_security, null);
+        final EditText input = dialogView.findViewById(R.id.securityInput);
+
         // creates htmlMessage, uses <br> for lines and <b> for bold
         String htmlMessage = "To finalize homicide, enter this code:<br><br><b>" + securityCode + "</b>";
+
         // prepares popup window and popup htmlMessage
         AlertDialog dialog = new AlertDialog.Builder(this)
                 .setTitle("Final Security Protocol")
-                .setMessage(android.text.Html.fromHtml(htmlMessage, android.text.Html.FROM_HTML_MODE_LEGACY))
-                .setView(container)
+                .setMessage(Html.fromHtml(htmlMessage, Html.FROM_HTML_MODE_LEGACY))
+                .setView(dialogView)    // sets  XML layout as a view
                 .setPositiveButton("Confirm", (d, which) -> {
                     // verifies entered input
                     if (input.getText().toString().equals(securityCode)) {
@@ -285,30 +283,26 @@ public class DollDetailActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(this, "Wrong code. Execution failed.", Toast.LENGTH_SHORT).show();
                     }
-                }).create();
-        // runs popup window, shows htmlMessage, causes method to be called
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+
+        // runs popup window, shows htmlMessage
         dialog.show();
+
+        // centers AlertDialog message
         TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) {
-            messageView.setGravity(android.view.Gravity.CENTER);
+            messageView.setGravity(Gravity.CENTER);
         }
     }
 
     // Doll Deleting Method (Step 3), actually deleting from everywhere
     private void terminateDoll() {
-        // Find the physical file in the hidden folder to delete it
-        File fileToDelete = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
-
-        if (fileToDelete.exists()) {
-            if (fileToDelete.delete()) {
-                System.out.println("Physical image deleted: " + currentDoll.getImagePath());
-            }
-        }
-
-        // then delete it in SQL with unique ID
+        // deletes Doll and all its data in SQL by unique ID
         dbManager.deleteDollById(currentDoll.getId());
 
-        // lastly CLOSE detail window
+        // lastly CLOSE detail window AUTOMATICALLY
         finish();
     }
 }

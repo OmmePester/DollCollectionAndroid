@@ -2,7 +2,7 @@
 
     <string name="app_name">DollUp</string>
     <string name="title_collection">My Closet</string>
-    <string name="title_add_doll">New Acquisition</string>
+    <string name="title_add_doll">Add Doll</string>
     <string name="title_doll_detail">Doll Profile</string>
     <string name="title_settings">Settings &amp; Sync</string>
 

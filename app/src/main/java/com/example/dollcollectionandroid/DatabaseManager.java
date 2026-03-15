@@ -23,6 +23,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
     private static final int DATABASE_VERSION = 3;
     private Context myContext;
 
+    // CONSTRUCTOR
     public DatabaseManager(Context context) {
     // We call StorageHelper to get the path in the hidden .closetDollUp folder
         super(context, StorageHelper.getDatabasePath(context), null, DATABASE_VERSION);

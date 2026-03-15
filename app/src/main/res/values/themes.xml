@@ -1,11 +1,17 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- The Base Theme -->
     <style name="Base.Theme.DollCollectionAndroid" parent="Theme.AppCompat.Light.DarkActionBar">
         <item name="colorPrimary">#6200EE</item>
         <item name="colorPrimaryDark">#3700B3</item>
         <item name="colorAccent">#6200EE</item>
-        <item name="android:textColorPrimary">#FFFFFF</item>
+        <!-- FIX 1: Change Primary Text to Black so it's visible on white backgrounds -->
+        <item name="android:textColorPrimary">#212121</item>
+        <!-- FIX 2: Force EditText text to be Black -->
+        <item name="android:editTextColor">#000000</item>
     </style>
 
     <style name="Theme.DollCollectionAndroid" parent="Base.Theme.DollCollectionAndroid" />
+
+
 </resources>

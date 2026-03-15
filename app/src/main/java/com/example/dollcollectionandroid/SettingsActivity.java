@@ -3,8 +3,15 @@ package com.example.dollcollectionandroid;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.text.Html;
+import android.text.InputFilter;
+import android.text.InputType;
+import android.view.Gravity;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import androidx.activity.result.ActivityResultLauncher;
@@ -253,31 +260,20 @@ public class SettingsActivity extends AppCompatActivity {
     private void triggerSecurityChallenge(boolean isUpload) {
         // generates random 6-digit code String that need to be repeated
         String securityCode = String.valueOf(new java.util.Random().nextInt(900000) + 100000);
-        // arranges input of security code, it is FINAL!!!! because of lambda input being final rule!!!!
-        final EditText input = new EditText(this);
-        // limits input to only 6 chars, as it is intended
-        input.setFilters(new android.text.InputFilter[] {
-                new android.text.InputFilter.LengthFilter(6)
-        });
-        input.setGravity(android.view.Gravity.CENTER);    // typed input is centered
-        input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);    // keyboard is number pad :)
-        android.widget.LinearLayout container = new android.widget.LinearLayout(this);
-        container.setOrientation(android.widget.LinearLayout.VERTICAL);
-        android.widget.LinearLayout.LayoutParams params = new android.widget.LinearLayout.LayoutParams(
-                android.view.ViewGroup.LayoutParams.MATCH_PARENT,
-                android.view.ViewGroup.LayoutParams.WRAP_CONTENT
-        );    // customization stuff
-        params.setMargins(80, 20, 80, 40);
-        input.setLayoutParams(params);
-        container.addView(input);
+
+        // inflates XML layout instead of coding it in Java
+        View dialogView = getLayoutInflater().inflate(R.layout.dialog_security, null);
+        final EditText input = dialogView.findViewById(R.id.securityInput);
+
         // creates htmlMessage based on method parameter: boolean isUpload
         String actionText = isUpload ? "OVERWRITE CLOUD BACKUP" : "OVERWRITE PHONE DATA";
         String htmlMessage = "To authorize <b>" + actionText + "</b>, enter this code:<br><br><b>" + securityCode + "</b>";
-        // prepares popup window, popup htmlMessage, and sets logic of method calling
+
+        // prepares popup window (dialog Builder), popup htmlMessage, and sets logic of method calling
         AlertDialog dialog = new AlertDialog.Builder(this)
-                .setTitle("Cloud Security Protocol")
-                .setMessage(android.text.Html.fromHtml(htmlMessage, android.text.Html.FROM_HTML_MODE_LEGACY))
-                .setView(container)
+                .setTitle("Final Security Protocol")
+                .setMessage(Html.fromHtml(htmlMessage, Html.FROM_HTML_MODE_LEGACY))
+                .setView(dialogView)    // sets  XML layout as a view
                 .setPositiveButton("Confirm", (d, which) -> {
                     // verifies entered input
                     if (input.getText().toString().equals(securityCode)) {
@@ -286,12 +282,17 @@ public class SettingsActivity extends AppCompatActivity {
                     } else {
                         Toast.makeText(this, "Wrong code. Authorization denied.", Toast.LENGTH_SHORT).show();
                     }
-                }).create();
+                })
+                .setNegativeButton("Cancel", null)
+                .create();
+
         // runs popup window, shows htmlMessage, causes methods to be called
         dialog.show();
+
+        // centers AlertDialog message
         TextView messageView = dialog.findViewById(android.R.id.message);
         if (messageView != null) {
-            messageView.setGravity(android.view.Gravity.CENTER);
+            messageView.setGravity(Gravity.CENTER);
         }
     }
 }

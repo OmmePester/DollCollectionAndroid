@@ -7,15 +7,20 @@
     android:gravity="center_horizontal"
     android:background="#F8F9FA">
 
-    <TextView
-        android:id="@+id/tvSettingsTitle"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Cloud Settings"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="30dp"
-        android:textColor="#333333" />
+<!--    ADDED FOR TOP BAR WITH ARROW, to avoid the overlay    -->
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="60dp" />
+
+<!--    <TextView-->
+<!--        android:id="@+id/tvSettingsTitle"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="Cloud Settings"-->
+<!--        android:textSize="24sp"-->
+<!--        android:textStyle="bold"-->
+<!--        android:layout_marginBottom="30dp"-->
+<!--        android:textColor="#333333" />-->
 
     <TextView
         android:id="@+id/tvCloudStatus"

@@ -16,15 +16,17 @@ import java.io.File;
 import java.util.List;
 
 /**
- *
+ * This Class handles displaying Doll List to UI's RecyclerView.
+ * It uses Glide to correctly show Doll images with corresponding data.
+ * It attaches listeners to ImageViews to open DollDetailActivity later.
  */
 
 public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder> {
 
-    private List<Doll> dollList;
-    private Context context; // Added to match the 'this' argument from CollectionActivity [cite: 2026-03-01]
+    private Context context;        // provided from CollectionActivity
+    private List<Doll> dollList;    // provided from CollectionActivity's DatabaseManager
 
-    // Updated Constructor to accept two arguments: Context and the List [cite: 2026-03-01]
+    // CONSTRUCTOR
     public DollAdapter(Context context, List<Doll> dollList) {
         this.context = context;
         this.dollList = dollList;
@@ -32,26 +34,29 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
 
     @NonNull
     @Override
+    // this automatic method takes
     public DollViewHolder onCreateViewHolder(@NonNull ViewGroup parent, int viewType) {
         View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.item_doll, parent, false);
         return new DollViewHolder(view);
     }
 
     @Override
+    // this automatic method takes specific Doll from List and projects its data on existing UI (RecyclerView)
     public void onBindViewHolder(@NonNull DollViewHolder holder, int position) {
+        // selects specific Doll
         Doll doll = dollList.get(position);
 
+        // gets Doll name
         String displayName = doll.getName();
 
+        // holds Doll name and ordinal number
         holder.nameLabel.setText(displayName);
         holder.numberLabel.setText((position + 1) + ".");
 
-        // adding the path to "closet" folder that is inside hidden folder
+        // locates image path, "closet" folder that is inside hidden folder
         File imgFile = new File(StorageHelper.getHiddenFolder(), "closet/" + doll.getImagePath());
-//        File closetFolder = new File(StorageHelper.getHiddenFolder(), "closet");
-//        File imgFile = new File(closetFolder, doll.getImagePath());
 
-        // using GLIDE CLASS to fix weird rotations and clearing cache, because otherwise it shows ghost files!!!!
+        // uses GLIDE Class to fix weird rotations and clearing cache, because otherwise it shows ghost files!!!!
         if (imgFile.exists()) {
             // calculating limits: Width is 1.5x larger, Height is limited to 2x Width
             int targetWidthPx = (int) (75 * context.getResources().getDisplayMetrics().density);
@@ -83,16 +88,25 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
     }
 
     @Override
+    // this helper method returns total number of Dolls in List, for RecyclerView to know
     public int getItemCount() {
         return dollList.size();
     }
 
+    // this helper method replaces old List with new (current/updated) List
     public void updateList(List<Doll> newList) {
+        // makes current (old) List into new List
         this.dollList = newList;
-        // method to update list of Dolls and refresh it to view the addition
+
+        // updates list of Dolls and refreshes it to view addition
         notifyDataSetChanged();
     }
 
+    /**
+     * This INNER Class is playing the role of a container. It finds and holds
+     * the references to specific ImageView and corresponding TextView inside
+     * a single list row, which prevents heavy findViewById lookups.
+     */
     public static class DollViewHolder extends RecyclerView.ViewHolder {
         TextView nameLabel, numberLabel;
         ImageView dollImage;
