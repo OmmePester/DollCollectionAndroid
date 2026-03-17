@@ -55,7 +55,7 @@ public class AddDollActivity extends AppCompatActivity {
             startActivityForResult(intent, 1000);
         });
 
-        // SAVE BUTTON: listens to clicks and calls saveDollToCloset() method
+        // SAVE BUTTON: listens to clicks and runs saveDollToCloset() method
         saveButton.setOnClickListener(v -> saveDollToCloset());
     }
 

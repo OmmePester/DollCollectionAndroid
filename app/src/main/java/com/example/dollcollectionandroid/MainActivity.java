@@ -38,7 +38,7 @@ public class MainActivity extends AppCompatActivity {
         // INITIALIZE DATABASE MANAGER!!!!
         dbManager = new DatabaseManager(this);    // here we pass our infamous CONTEXT
 
-        // VIEW COLLECTION Button: listens to clicks and redirects to CollectionActivity window
+        // VIEW COLLECTION Button: listens to clicks and opens CollectionActivity window
         // finds Button ID in corresponding XML and sets listener for clicks
         findViewById(R.id.btnViewCollection).setOnClickListener(v -> {
             // creates Intent, which is used to move to other activity
@@ -46,7 +46,7 @@ public class MainActivity extends AppCompatActivity {
             // moves to other activity
             startActivity(intent);
         });
-        // SETTINGS Button: listens to clicks and redirects to SettingsActivity window
+        // SETTINGS Button: listens to clicks and opens SettingsActivity window
         findViewById(R.id.btnSettings).setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
             startActivity(intent);

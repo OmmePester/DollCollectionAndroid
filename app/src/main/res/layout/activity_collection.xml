@@ -51,10 +51,11 @@
         android:layout_height="match_parent"
         android:layout_below="@id/topBar"
         android:padding="8dp"
-        android:clipToPadding="false" />
+        android:clipToPadding="false"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"/>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/addDollFab"
+        android:id="@+id/addDollButtonPlus"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_alignParentEnd="true"

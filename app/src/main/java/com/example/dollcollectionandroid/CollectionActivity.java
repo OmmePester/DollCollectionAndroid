@@ -13,6 +13,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import com.example.dollcollectionandroid.model.Doll;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
+
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -21,150 +23,88 @@ import java.util.stream.Collectors;    // for Streams
 import java.util.Comparator;           // for Streams
 
 /**
- *
+ * This Activity is a window where most activity happens.
+ * It coordinates the extraction of data from DatabaseManager and passes
+ * it to the DollAdapter, which uses that data for RecyclerView.
+ * It implements efficient Search, Sort, and Filter mechanics on Doll List.
+ * It listens to click and redirects to other activities (AddDollActivity/DollDetailActivity).
  */
 
 public class CollectionActivity extends AppCompatActivity {
 
-    private RecyclerView recyclerView;    //
-    private DollAdapter adapter;          // DollAdapter that handles Doll display, without bothering DatabaseManager
-    private DatabaseManager dbManager;    // DatabaseManager used only onc to load List of Dolls
-    private List<Doll> allDolls;          //
-
-    // [MY ADDITION: Variables to track current filter state, like your JavaFX MenuButton text]
+    // VARIABLES
+    private DatabaseManager dbManager;    // DatabaseManager used only once to load List of Dolls
+    private List<Doll> allDolls;          // the actual List of Doll objects
+    private DollAdapter adapter;          // DollAdapter that handles Doll display, without constantly bothering DatabaseManager
+    private RecyclerView recyclerView;    // UI elements that contains scrolling List of Dolls
     private EditText searchField;
-    private Button filterButton; // Renamed from local to class variable to update text
-    private Button sortButton;
-    private String currentSortMode = "None";    // sets initial sort type to none, and saves selected type here
-    private String currentBrandFilter = "All";
-    private String currentModelFilter = "All";
+    private Button sortButton, filterButton;
+    private String currentSortMode = "None";      // sets initial sort type to "None"
+    private String currentBrandFilter = "All";    // sets initial BrandFilter type to "All"
+    private String currentModelFilter = "All";    // sets initial ModelFilter type to "All"
+    private FloatingActionButton addButtonPlus;
 
     @Override
+    // this startup method initializes CollectionActivity
     protected void onCreate(Bundle savedInstanceState) {
+        // starts standard lifecycle
         super.onCreate(savedInstanceState);
+
+        // connects XML file with this activity
         setContentView(R.layout.activity_collection);
 
-        // Enable the back arrow in the top bar to return to your Main Menu [cite: 2026-03-01]
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-            getSupportActionBar().setTitle("My Closet");
-        }
-
-        // 1. Initialize Database and List
+        // instantiates DatabaseManager using Context and calls all Dolls to save into the List
         dbManager = new DatabaseManager(this);
-        recyclerView = findViewById(R.id.dollRecyclerView);
-
-        // [LAG FIX: Set fixed size to true if your item heights never change] [cite: 2026-03-03]
-        recyclerView.setHasFixedSize(true);
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-
-        filterButton = findViewById(R.id.filterButton); // Link to class variable
-        sortButton = findViewById(R.id.sortButton);
-        sortButton.setOnClickListener(v -> showSortDialog());    // Setup sort listener
-        searchField = findViewById(R.id.searchField);
-        FloatingActionButton addFab = findViewById(R.id.addDollFab);
-
-        // 2. Get all dolls from the 'closet' database [cite: 2026-02-22]
         allDolls = dbManager.getAllDolls();
 
-        // 3. Connect the data to the UI using the Adapter
+        // instantiates and loads DollAdapter with the List of all Dolls
         adapter = new DollAdapter(this, new ArrayList<>(allDolls));
+
+        // finds IDs of XML elements (RecyclerView, TextField, Button)
+        recyclerView = findViewById(R.id.dollRecyclerView);
+        searchField = findViewById(R.id.searchField);
+        sortButton = findViewById(R.id.sortButton);
+        filterButton = findViewById(R.id.filterButton); // Link to class variable
+        addButtonPlus = findViewById(R.id.addDollButtonPlus);
+
+        // sets sizes of RecyclerView to be fixed (good memory optimization)
+        recyclerView.setHasFixedSize(true);
+
+        // connects Doll data to UI element, RecyclerView, by using DollAdapter
         recyclerView.setAdapter(adapter);
 
-        // [MY ADDITION: The SEARCH LOGIC (Matches your JavaFX textProperty listener)] [cite: 2026-03-01]
+        // searches Dolls in the List based on the entered input, via attaching complex Listener to search box
         searchField.addTextChangedListener(new TextWatcher() {
             @Override
+            // this override is mandatory by OS
             public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
             @Override
+            // this override is mandatory by OS
             public void onTextChanged(CharSequence s, int start, int before, int count) {
-                // [MY ADDITION: We call applyFilters to ensure Search + Menu work together] [cite: 2026-03-01]
+                // calls applyFilters() method to ensure Search + RecyclerView work together
                 applyFilters();
             }
             @Override
+            // this override is mandatory by OS
             public void afterTextChanged(Editable s) {}
         });
 
-        // THE FILTER SUGGESTION LOGIC [cite: 2026-02-22]
+        // SORT Button: listens to clicks and runs showSortDialog() method
+        sortButton.setOnClickListener(v -> showSortDialog());
+
+        // FILTER Button: listens to clicks and runs showFilterDialog() method
         filterButton.setOnClickListener(v -> showFilterDialog());
 
-        // PLUS BUTTON: Redirects to Add Doll Activity window [cite: 2026-03-01]
-        addFab.setOnClickListener(v -> {
+        // ADD Button: listens to clicks and opens AddDollActivity window
+        addButtonPlus.setOnClickListener(v -> {
             Intent intent = new Intent(CollectionActivity.this, AddDollActivity.class);
             startActivity(intent);
         });
     }
 
-    // this method shows cascading dialog suggestions for filtering
-    private void showFilterDialog() {
-        String[] initialOptions = {"Brand", "Model", "Clear All Filters"};
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Filter By:");
-        builder.setItems(initialOptions, (dialog, which) -> {
-            if (which == 0) { // Clicked BRAND
-                showSubFilterDialog("Brand");
-            } else if (which == 1) { // Clicked MODEL
-                showSubFilterDialog("Model");
-            } else if (which == 2) { // Clicked CLEAR
-                filterButton.setText("Filter");
-                currentBrandFilter = "All";
-                currentModelFilter = "All";
-                applyFilters();
-            }
-        });
-        builder.show();
-    }
-
-    // this method shows distinct values of chosen category from showFilterDialogue()
-    private void showSubFilterDialog(String type) {
-        Set<String> uniqueValues = new HashSet<>();
-        for (Doll d : allDolls) {
-            if (type.equals("Brand") && d.getBrand() != null && !d.getBrand().isEmpty()) {
-                uniqueValues.add(d.getBrand());
-            } else if (type.equals("Model") && d.getModel() != null && !d.getModel().isEmpty()) {
-                uniqueValues.add(d.getModel());
-            }
-        }
-
-        List<String> options = new ArrayList<>(uniqueValues);
-        String[] optionsArray = options.toArray(new String[0]);
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("Select " + type);
-        builder.setItems(optionsArray, (dialog, which) -> {
-            String selected = optionsArray[which];
-            filterButton.setText(type + ": " + selected);
-
-            if (type.equals("Brand")) {
-                currentBrandFilter = selected;
-                currentModelFilter = "All"; // Reset model if filtering by brand [cite: 2026-03-01]
-            } else {
-                currentModelFilter = selected;
-                currentBrandFilter = "All"; // Reset brand if filtering by model [cite: 2026-03-01]
-            }
-            applyFilters();
-        });
-        builder.show();
-    }
-
-    // this is where search and/or filters actually do their work on the Doll list
-    private void applyFilters() {
-        final String searchVal = searchField.getText().toString().toLowerCase();
-
-        // One-stop shop: Streams handle filtering and sorting in one efficient pipeline [cite: 2026-03-06]
-        List<Doll> filtered = allDolls.stream()
-                .filter(doll -> searchVal.isEmpty() || doll.getName().toLowerCase().startsWith(searchVal))
-                .filter(doll -> currentBrandFilter.equals("All") || (doll.getBrand() != null && doll.getBrand().equals(currentBrandFilter)))
-                .filter(doll -> currentModelFilter.equals("All") || (doll.getModel() != null && doll.getModel().equals(currentModelFilter)))
-                .sorted(getOptimalComparator())
-                .collect(Collectors.toList());
-
-        // Update list and refresh view to see the changes [cite: 2026-02-22]
-        adapter.updateList(filtered);
-    }
-
-    // this method shows cascading dialog suggestions for sorting
+    // this helper method shows cascading dialog suggestions for SORTing
     private void showSortDialog() {
+        // hardcodes SORTing options to show in dialog
         String[] options = {
                 "None",
                 "Name (A-Z)", "Name (Z-A)",
@@ -172,20 +112,25 @@ public class CollectionActivity extends AppCompatActivity {
                 "Year (Oldest)", "Year (Newest)"
         };
 
+        // builds SORTing pop up dialog window
         new AlertDialog.Builder(this)
                 .setTitle("Sort By:")
                 .setItems(options, (dialog, which) -> {
                     currentSortMode = options[which];
                     sortButton.setText("Sort: " + currentSortMode);
-                    applyFilters();    // Re-apply everything with new sort
+                    applyFilters();    // runs applyFilter(), which has both SORT and filter mechanics!!!!
                 }).show();
     }
 
-    //this is helper method that gives Comparator based on our selection
+    // this helper method returns Comparator based on our sorting selection
     private Comparator<Doll> getOptimalComparator() {
+        // checks for "None" selection and returns 0, which means they are equal
         if (currentSortMode.equals("None")) return (d1, d2) -> 0;
 
+        // instantiates Comparator<Doll>
         Comparator<Doll> comp;
+
+        // handles all cases of selection with corresponding Comparator
         switch (currentSortMode) {
             case "Name (A-Z)":
                 return Comparator.comparing(Doll::getName, String.CASE_INSENSITIVE_ORDER);
@@ -199,7 +144,8 @@ public class CollectionActivity extends AppCompatActivity {
                 break;
             case "Date (Oldest)":
             case "Date (Newest)":
-                java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat("dd/MM/yyyy", java.util.Locale.UK);
+                // uses SimpleDateFormat object, which parses date String into Date object
+                SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy", java.util.Locale.UK);
                 comp = Comparator.comparing(doll -> {
                     try { return sdf.parse(doll.getBirthDate()); }
                     catch (Exception e) { return new java.util.Date(0); }
@@ -209,24 +155,97 @@ public class CollectionActivity extends AppCompatActivity {
             default:
                 return (d1, d2) -> 0;
         }
-        // Always fallback to Alphabetical if primary sort (Date/Year) is a tie [cite: 2026-03-04]
+
+        // uses thenComparing() method to apply alphabetical sort if there is a tie in primary sort
         return comp.thenComparing(Doll::getName, String.CASE_INSENSITIVE_ORDER);
     }
 
-    // This makes the top bar back arrow work [cite: 2026-03-01]
-    @Override
-    public boolean onSupportNavigateUp() {
-        finish(); // Closes collection and returns to your Main Menu [cite: 2026-03-01]
-        return true;
+    // this helper method shows cascading dialog suggestions for FILTERing
+    private void showFilterDialog() {
+        // hardcodes FILTERing options to show in dialog
+        String[] initialOptions = {"Brand", "Model", "Clear All Filters"};
+
+        // builds FILTERing pop up first dialog window
+        new AlertDialog.Builder(this)
+                .setTitle("Filter By:")
+                .setItems(initialOptions, (dialog, which) -> {
+                    if (which == 0) {           // clicks "Brand"
+                        showSubFilterDialog("Brand");
+                    } else if (which == 1) {    // clicks "Model"
+                        showSubFilterDialog("Model");
+                    } else if (which == 2) {    // clicks "Clear"
+                        filterButton.setText("Filter");
+                        currentBrandFilter = "All";
+                        currentModelFilter = "All";
+                        applyFilters();         // runs applyFilter(), which has both sort and FILTER mechanics!!!!
+                    }
+                }).show();
     }
 
-    // Refresh the list whenever we switch back to this screen
+    // this helper method shows distinct values of chosen category from showFilterDialogue()
+    private void showSubFilterDialog(String type) {
+        // instantiates HashSet, which prevents duplicates
+        Set<String> uniqueValues = new HashSet<>();
+
+        // iterates through Doll List, and stores unique/distinct Brands/Models
+        for (Doll d : allDolls) {
+            if (type.equals("Brand") && d.getBrand() != null && !d.getBrand().isEmpty()) {
+                uniqueValues.add(d.getBrand());
+            } else if (type.equals("Model") && d.getModel() != null && !d.getModel().isEmpty()) {
+                uniqueValues.add(d.getModel());
+            }
+        }
+
+        // converts uniqueValues HashSet to List, then to primitive Array, because Builder need Array
+        List<String> options = new ArrayList<>(uniqueValues);
+        String[] optionsArray = options.toArray(new String[0]);
+
+        // builds FILTERing pop up second dialog window
+        new AlertDialog.Builder(this)
+                .setTitle("Select " + type)
+                .setItems(optionsArray, (dialog, which) -> {
+                    // grabs filtering selections and updates Button text
+                    String selected = optionsArray[which];
+                    filterButton.setText(type + ": " + selected);
+
+                    // selects specific Brand/Model and resets the other
+                    if (type.equals("Brand")) {
+                        currentBrandFilter = selected;
+                        currentModelFilter = "All";    // resets Model, if we filter by Brand
+                    } else {
+                        currentModelFilter = selected;
+                        currentBrandFilter = "All";    // resets Brand, if we filter by Model
+                    }
+                    applyFilters();    // runs applyFilter(), which has both SORT and FILTER mechanics!!!!
+                }).show();
+    }
+
+    // this helper method handles search and/or filters on the Doll list
+    private void applyFilters() {
+        //grabs typed search text and stores as fixed lowercase String
+        final String searchVal = searchField.getText().toString().toLowerCase();
+
+        // streams Doll List and applies search/filters in one efficient Stream pipeline
+        List<Doll> filtered = allDolls.stream()
+                .filter(doll -> searchVal.isEmpty() || doll.getName().toLowerCase().startsWith(searchVal))
+                .filter(doll -> currentBrandFilter.equals("All") || (doll.getBrand() != null && doll.getBrand().equals(currentBrandFilter)))
+                .filter(doll -> currentModelFilter.equals("All") || (doll.getModel() != null && doll.getModel().equals(currentModelFilter)))
+                .sorted(getOptimalComparator())
+                .collect(Collectors.toList());
+
+        // updates list and refresh view to see the changes [cite: 2026-02-22]
+        adapter.updateList(filtered);
+    }
+
     @Override
+    // this method refreshed Doll List and RecyclerView after any changes, to List or to SQL DB
     public void onResume() {
         super.onResume();
         if (adapter != null) {
+            // updates Doll List with new changed data from SQL DB
             allDolls = dbManager.getAllDolls();
-            // [FIX: Calling applyFilters instead of updateList(allDolls) so filters persist] [cite: 2026-03-01]
+
+            // calls applyFilter() method, because it has updateList() method in it
             applyFilters();
         }
     }
