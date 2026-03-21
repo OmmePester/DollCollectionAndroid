@@ -21,8 +21,8 @@ import java.util.List;
 public class DatabaseManager extends SQLiteOpenHelper {
 
     // VARIABLES
-    // Version increased to 3 after adding new columns (Date and Time), and changing hint to gender!!!!
-    private static final int DATABASE_VERSION = 3;
+    // Version increased to 4 after adding new column "display_order"!!!!
+    private static final int DATABASE_VERSION = 4;
     private Context myContext;
 
     // CONSTRUCTOR
@@ -47,7 +47,8 @@ public class DatabaseManager extends SQLiteOpenHelper {
                 "description TEXT NOT NULL, " +
                 "gender TEXT NOT NULL, " +
                 "birth_date TEXT NOT NULL, " +
-                "birth_time TEXT NOT NULL)";
+                "birth_time TEXT NOT NULL, " +
+                "display_order INTEGER NOT NULL)";    // latest addition
         db.execSQL(createTable);
     }
 
@@ -76,6 +77,7 @@ public class DatabaseManager extends SQLiteOpenHelper {
         values.put("gender", "");
         values.put("birth_date", "");
         values.put("birth_time", "");
+        values.put("display_order", 0);    // latest addition
 
         // calls for, stores, and returns ID (autoincrement)
         long id = db.insert("items", null, values);
@@ -87,9 +89,10 @@ public class DatabaseManager extends SQLiteOpenHelper {
         // creates and opens SQL DB, for writing in it
         SQLiteDatabase db = this.getWritableDatabase();
 
-        // instantiates ContentValues and packs variable "image_path" into it
+        // instantiates ContentValues and packs variables "image_path" and "display_order" into it
         ContentValues values = new ContentValues();
         values.put("image_path", fileName);
+        values.put("display_order", id);    // latest addition
 
         // executes SQL UPDATE command on "items" table
         db.update("items", values, "id = ?", new String[]{String.valueOf(id)});
@@ -117,8 +120,8 @@ public class DatabaseManager extends SQLiteOpenHelper {
         // creates empty List
         List<Doll> dolls = new ArrayList<>();
 
-        // prepares SQL query to read everything
-        String sql = "SELECT * FROM items";
+        // prepares SQL query to read everything, according to user's custom display order
+        String sql = "SELECT * FROM items ORDER BY display_order ASC";
 
         // creates and opens SQL DB, for reading from it
         SQLiteDatabase db = this.getReadableDatabase();
@@ -174,12 +177,35 @@ public class DatabaseManager extends SQLiteOpenHelper {
         db.update("items", values, "id = ?", new String[]{String.valueOf(id)});
     }
 
-    // This method deletes a Doll by its ID from our "items" table, it is called in DollDetailActivity
+    // this method deletes a Doll by its ID from our "items" table, it is called in DollDetailActivity
     public void deleteDollById(int id) {
         // creates and opens SQL DB
         SQLiteDatabase db = this.getWritableDatabase();
 
         // executes SQL DELETE command on "items" table
         db.delete("items", "id = ?", new String[]{String.valueOf(id)});
+    }
+
+    // this method saves user's custom Doll order in our SQL DB, it is called in CollectionActivity
+    public void updateAllDollOrders(List<Doll> orderedDolls) {
+        // creates and opens SQL DB
+        SQLiteDatabase db = this.getWritableDatabase();
+
+        // uses Transaction for performance, user can update a lot of Doll position
+        db.beginTransaction();
+        try {
+            // instantiates and packs variables into ContentValues
+            ContentValues values = new ContentValues();
+
+            // loops Doll List, and sets List's index to "display_order", index range is [1:n]
+            for (int i = 0; i < orderedDolls.size(); i++) {
+                values.put("display_order", i + 1);    // makes range [1:n], to match autoincrement ID in SQL DB
+                db.update("items", values, "id = ?", new String[]{String.valueOf(orderedDolls.get(i).getId())});
+            }
+            db.setTransactionSuccessful();
+        } finally {
+            // executes massive Transaction save operations
+            db.endTransaction();
+        }
     }
 }

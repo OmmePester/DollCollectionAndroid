@@ -13,6 +13,7 @@ import com.bumptech.glide.Glide; // [PRO SOLUTION: Added Glide for rotation fix]
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.dollcollectionandroid.model.Doll;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -91,7 +92,7 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
     }
 
     @Override
-    // this helper method returns total number of Dolls in List, for RecyclerView to know
+    // this getter method returns total number of Dolls in List, for RecyclerView to know
     public int getItemCount() {
         return dollList.size();
     }
@@ -104,6 +105,23 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         // updates list of Dolls and refreshes it to view addition
         notifyDataSetChanged();
     }
+
+    // this method visually swaps two Dolls in the list while the user is dragging them
+    public void moveItem(int fromPosition, int toPosition) {
+        // strictly swaps the items in our Java ArrayList memory
+        Collections.swap(dollList, fromPosition, toPosition);
+
+        // notifies the RecyclerView to play the smooth sliding animation on the screen
+        notifyItemMoved(fromPosition, toPosition);
+    }
+
+    // this getter method returns the current state of Doll List, it is called in CollectionActivity
+    public List<Doll> getDollList() {
+        return dollList;
+    }
+
+
+
 
     /**
      * This INNER Class is playing the role of a container. It finds and holds

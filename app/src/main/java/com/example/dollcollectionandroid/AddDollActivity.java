@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;    // added to handle image rotation bug
+import com.yalantis.ucrop.UCrop;    // added to handle image cropping with 3:4 ratio
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
@@ -63,14 +64,72 @@ public class AddDollActivity extends AppCompatActivity {
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+
+
+
+
+
+
+
+
+
+        // 1. User successfully picked an image from the gallery
         if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
-            selectedImageUri = data.getData();
+            Uri sourceUri = data.getData();
+
+            // creates a temporary file in cache to hold the cropped version
+            Uri destinationUri = Uri.fromFile(new File(getCacheDir(), "temp_crop.jpg"));
+
+            // starts uCrop with a locked 3:4 aspect ratio
+            UCrop.of(sourceUri, destinationUri)
+                    .withAspectRatio(3, 4)
+                    .start(this);
+        }
+
+        // 2. User successfully finished cropping the image
+        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP && data != null) {
+            // grabs the URI of the final cropped image
+            selectedImageUri = UCrop.getOutput(data);
+
             // USES GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY
             Glide.with(this)
                     .load(selectedImageUri)
                     .fitCenter()
                     .into(dollImageView);
         }
+
+        // 3. Catches any errors during the crop process
+        if (resultCode == UCrop.RESULT_ERROR && data != null) {
+            Throwable cropError = UCrop.getError(data);
+            if (cropError != null) {
+                cropError.printStackTrace();
+                Toast.makeText(this, "Crop error: " + cropError.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//        if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
+//            selectedImageUri = data.getData();
+//            // USES GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY
+//            Glide.with(this)
+//                    .load(selectedImageUri)
+//                    .fitCenter()
+//                    .into(dollImageView);
+//        }
     }
 
     // this method saves image path and name to SQL DB, and copies image to local hidden folder

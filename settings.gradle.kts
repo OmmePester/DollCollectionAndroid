@@ -19,6 +19,8 @@ dependencyResolutionManagement {
     repositories {
         google()
         mavenCentral()
+        // tells Android Studio to look in the JitPack server for community libraries like uCrop
+        maven(url = "https://jitpack.io")
     }
 }
 
