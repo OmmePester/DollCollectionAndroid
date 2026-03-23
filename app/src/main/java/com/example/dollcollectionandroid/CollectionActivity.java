@@ -73,20 +73,14 @@ public class CollectionActivity extends AppCompatActivity {
         // connects Doll data to UI element, RecyclerView, by using DollAdapter
         recyclerView.setAdapter(adapter);
 
-
-
-
-
-//===================START INSERTION=====================
-        // Creates the drag-and-drop helper using Android's ItemTouchHelper
+        // instantiates a drag-and-drop helper using important ItemTouchHelper Class
         ItemTouchHelper itemTouchHelper = new ItemTouchHelper(
                 new ItemTouchHelper.SimpleCallback(
                         ItemTouchHelper.UP | ItemTouchHelper.DOWN, 0) {
-
                     @Override
-                    // Checks if dragging is currently allowed
+                    // checks if dragging a row is currently allowed
                     public int getMovementFlags(@androidx.annotation.NonNull RecyclerView recyclerView, @androidx.annotation.NonNull RecyclerView.ViewHolder viewHolder) {
-                        // If the user is sorting by anything other than "None", lock the list so they can't drag!
+                        // locks the Doll List, if user is sorting by anything other than "None"
                         if (!currentSortMode.equals("None")) {
                             return 0;
                         }
@@ -94,40 +88,40 @@ public class CollectionActivity extends AppCompatActivity {
                     }
 
                     @Override
-                    // Triggers repeatedly as the user's finger drags the row up or down the screen
+                    // drags a row up/down the screen, by repeatedly running as user's finger slide on screen
                     public boolean onMove(@androidx.annotation.NonNull RecyclerView recyclerView, @androidx.annotation.NonNull RecyclerView.ViewHolder viewHolder, @androidx.annotation.NonNull RecyclerView.ViewHolder target) {
+                        // VARIABLES: to hold the initial and final positions
                         int fromPosition = viewHolder.getAdapterPosition();
                         int toPosition = target.getAdapterPosition();
 
-                        // Calls your swap method in the adapter to visually move the rows
+                        // calls helper swap method in DollAdapter to visually move row
                         adapter.moveItem(fromPosition, toPosition);
                         return true;
                     }
 
                     @Override
-                    // Mandatory override for swipe-to-delete gestures (we leave this empty because we use a button to delete)
+                    // this method override is required by OS, but we do not implement swipe-to-delete gestures, so block is empty
                     public void onSwiped(@androidx.annotation.NonNull RecyclerView.ViewHolder viewHolder, int direction) {
                     }
 
                     @Override
-                    // Triggers the exact moment the user lifts their finger and drops the row into its final place
+                    // finalizes the dragging, exactly when user lifts their finger and drops row into its final place
                     public void clearView(@androidx.annotation.NonNull RecyclerView recyclerView, @androidx.annotation.NonNull RecyclerView.ViewHolder viewHolder) {
+                        // starts standard lifecycle
                         super.clearView(recyclerView, viewHolder);
 
-                        // Grabs the newly swapped list from the adapter and saves the new order to the database!
+                        // grabs new Doll List from DollAdapter and saves it to SQL DB
                         if (adapter != null) {
                             dbManager.updateAllDollOrders(adapter.getDollList());
+
+                            // notifies adapter and instantly shows the new visible order number
+                            //adapter.notifyDataSetChanged();
                         }
                     }
                 });
 
-        // Attaches the completely built helper to your specific RecyclerView
+        // attaches ItemTouchHelper helper we just built to our RecyclerView
         itemTouchHelper.attachToRecyclerView(recyclerView);
-//===================END INSERTION=====================
-
-
-
-
 
         // searches Dolls in the List based on the entered input, via attaching complex Listener to search box
         searchField.addTextChangedListener(new TextWatcher() {

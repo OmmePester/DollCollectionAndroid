@@ -60,25 +60,19 @@ public class AddDollActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> saveDollToCloset());
     }
 
-    // this method checks image selection, extracts URI and displays image with Glide
+    // this method checks image selection, extracts URI, manipulates image with uCrop, and displays image with Glide
     @Override
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-
-
-
-
-
-
-
-
-        // 1. User successfully picked an image from the gallery
+        // picks image from gallery and uses its URI on uCrop for cropping/zooming/rotating
         if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
+            // locates URI of initial image version
             Uri sourceUri = data.getData();
 
-            // creates a temporary file in cache to hold the cropped version
-            Uri destinationUri = Uri.fromFile(new File(getCacheDir(), "temp_crop.jpg"));
+            // creates a temporary and unique file to hold UNIQUE cropped version (millisecond addition prevents ghost image files)
+            String tempFileName = "temp_crop_" + System.currentTimeMillis() + ".jpg";
+            Uri destinationUri = Uri.fromFile(new File(getCacheDir(), tempFileName));
 
             // starts uCrop with a locked 3:4 aspect ratio
             UCrop.of(sourceUri, destinationUri)
@@ -86,9 +80,9 @@ public class AddDollActivity extends AppCompatActivity {
                     .start(this);
         }
 
-        // 2. User successfully finished cropping the image
+        // finalizes uCrop processes and passes it to Glide for preview
         if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP && data != null) {
-            // grabs the URI of the final cropped image
+            // grabs  URI of final cropped image version
             selectedImageUri = UCrop.getOutput(data);
 
             // USES GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY
@@ -98,7 +92,7 @@ public class AddDollActivity extends AppCompatActivity {
                     .into(dollImageView);
         }
 
-        // 3. Catches any errors during the crop process
+        // catches errors during cropping process
         if (resultCode == UCrop.RESULT_ERROR && data != null) {
             Throwable cropError = UCrop.getError(data);
             if (cropError != null) {
@@ -106,30 +100,6 @@ public class AddDollActivity extends AppCompatActivity {
                 Toast.makeText(this, "Crop error: " + cropError.getMessage(), Toast.LENGTH_SHORT).show();
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//        if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
-//            selectedImageUri = data.getData();
-//            // USES GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY
-//            Glide.with(this)
-//                    .load(selectedImageUri)
-//                    .fitCenter()
-//                    .into(dollImageView);
-//        }
     }
 
     // this method saves image path and name to SQL DB, and copies image to local hidden folder

@@ -106,7 +106,7 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
         notifyDataSetChanged();
     }
 
-    // this method visually swaps two Dolls in the list while the user is dragging them
+    // this helper method visually swaps two Dolls in the list while the user is dragging them
     public void moveItem(int fromPosition, int toPosition) {
         // strictly swaps the items in our Java ArrayList memory
         Collections.swap(dollList, fromPosition, toPosition);

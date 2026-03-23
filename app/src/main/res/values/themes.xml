@@ -13,5 +13,9 @@
 
     <style name="Theme.DollCollectionAndroid" parent="Base.Theme.DollCollectionAndroid" />
 
+    <!-- to fix the upper elevation of image cropping/zooming/rotating window -->
+    <style name="Theme.UCropFix" parent="Theme.AppCompat.Light.NoActionBar">
+        <item name="android:fitsSystemWindows">true</item>
+    </style>
 
 </resources>
