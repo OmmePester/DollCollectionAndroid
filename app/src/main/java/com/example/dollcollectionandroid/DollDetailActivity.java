@@ -2,20 +2,26 @@ package com.example.dollcollectionandroid;
 
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Html;
 import android.text.InputFilter;
-import android.text.InputType;
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.*;
+import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.dollcollectionandroid.model.Doll;
+import com.yalantis.ucrop.UCrop;
+
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.Calendar;
 
 /**
@@ -33,6 +39,7 @@ public class DollDetailActivity extends AppCompatActivity {
     private DatabaseManager dbManager;
     private int dollId;
     private Doll currentDoll;
+    private Uri newSelectedImageUri;
 
     // this startup method initializes DollDetailActivity
     @Override
@@ -72,6 +79,16 @@ public class DollDetailActivity extends AppCompatActivity {
         // listens to clicks and runs corresponding spinner methods
         birthDateField.setOnClickListener(v -> showDateSpinner());    // 3 scrolls of date spinner
         birthTimeField.setOnClickListener(v -> showTimeSpinner());    // 2 scrolls time spinner
+
+        //===================START INSERTION=====================
+        // listens to clicks on the image to open phone gallery for changing the photo
+        detailImage.setOnClickListener(v -> {
+            Intent intent = new Intent(Intent.ACTION_PICK);
+            intent.setType("image/*");
+            startActivityForResult(intent, 1000);
+        });
+        //===================END INSERTION=====================
+
         // listens and clears the field entirely when it is clicked
         View.OnFocusChangeListener clearOnFocus = (v, hasFocus) -> {
             if (hasFocus && v instanceof EditText) {
@@ -216,6 +233,31 @@ public class DollDetailActivity extends AppCompatActivity {
         currentDoll.setGender(newGender);
         currentDoll.setBirthDate(newDate);
         currentDoll.setBirthTime(newTime);
+
+        //===================START INSERTION=====================
+        // OVERWRITE ENGINE: If user picked a new photo, crush the old file with the new bytes!
+        if (newSelectedImageUri != null) {
+            try {
+                // points directly at the existing file in the hidden closet
+                File existingFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
+
+                // sucks data from the new crop, pours it directly over the old file
+                InputStream is = getContentResolver().openInputStream(newSelectedImageUri);
+                FileOutputStream fos = new FileOutputStream(existingFile);
+                byte[] buffer = new byte[1024];
+                int read;
+                while ((read = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, read);
+                }
+                is.close();
+                fos.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Failed to overwrite image file!", Toast.LENGTH_SHORT).show();
+            }
+        }
+        //===================END INSERTION=====================
+
         // uses DataBaseManager to save changes into closet.db
         dbManager.updateFullDollDetails(
                 currentDoll.getId(),           // redundant but still
@@ -305,4 +347,48 @@ public class DollDetailActivity extends AppCompatActivity {
         // lastly CLOSE detail window AUTOMATICALLY
         finish();
     }
+
+    //===================START INSERTION=====================
+    // this method catches the gallery selection, routes it to uCrop, and previews the new crop
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+
+        // 1. User successfully picked an image from the gallery
+        if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
+            Uri sourceUri = data.getData();
+            String tempFileName = "temp_crop_" + System.currentTimeMillis() + ".jpg";
+            Uri destinationUri = Uri.fromFile(new File(getCacheDir(), tempFileName));
+
+            // starts uCrop with a locked 3:4 aspect ratio
+            UCrop.of(sourceUri, destinationUri)
+                    .withAspectRatio(3, 4)
+                    .start(this);
+        }
+
+        // 2. User successfully finished cropping the image
+        if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP && data != null) {
+            // saves to our temporary variable
+            newSelectedImageUri = UCrop.getOutput(data);
+
+            // PREVIEWS the newly cropped image immediately!
+            // Crucial: we must skip cache here so Glide doesn't accidentally show the old photo
+            Glide.with(this)
+                    .load(newSelectedImageUri)
+                    .fitCenter()
+                    .skipMemoryCache(true)
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .into(detailImage);
+        }
+
+        // 3. Catches any errors during the crop process
+        if (resultCode == UCrop.RESULT_ERROR && data != null) {
+            Throwable cropError = UCrop.getError(data);
+            if (cropError != null) {
+                cropError.printStackTrace();
+                Toast.makeText(this, "Crop error: " + cropError.getMessage(), Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+//===================END INSERTION=====================
 }

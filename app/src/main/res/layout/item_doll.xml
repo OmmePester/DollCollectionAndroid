@@ -8,7 +8,8 @@
 
     <TextView
         android:id="@+id/numberLabel"
-        android:layout_width="wrap_content"
+        android:layout_width="30dp"
+        android:gravity="end"
         android:layout_height="wrap_content"
         android:text="1."
         android:textSize="18sp"

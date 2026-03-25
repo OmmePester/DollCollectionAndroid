@@ -116,6 +116,17 @@ public class CollectionActivity extends AppCompatActivity {
 
                             // notifies adapter and instantly shows the new visible order number
                             //adapter.notifyDataSetChanged();
+                            // displaces focus of RecyclerView, so commented for future debugging
+
+                            recyclerView.post(() -> {
+                                for (int i = 0; i < recyclerView.getChildCount(); i++) {
+                                    DollAdapter.DollViewHolder holder = (DollAdapter.DollViewHolder) recyclerView.getChildViewHolder(recyclerView.getChildAt(i));
+                                    if (holder != null && holder.getAdapterPosition() != RecyclerView.NO_POSITION) {
+                                        holder.numberLabel.setText((holder.getAdapterPosition() + 1) + ".");
+                                    }
+                                }
+                            });
+
                         }
                     }
                 });
