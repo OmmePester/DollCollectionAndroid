@@ -7,10 +7,10 @@ import android.text.Editable;
 import android.text.TextWatcher;
 import android.widget.Button;
 import android.widget.EditText;
-
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.ItemTouchHelper;
 import androidx.recyclerview.widget.RecyclerView;
+
 import com.example.dollcollectionandroid.model.Doll;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
@@ -110,23 +110,13 @@ public class CollectionActivity extends AppCompatActivity {
                         // starts standard lifecycle
                         super.clearView(recyclerView, viewHolder);
 
-                        // grabs new Doll List from DollAdapter and saves it to SQL DB
+                        // updates Doll order both in SQL DB and in UI (RecyclerView)
                         if (adapter != null) {
+                            // grabs new Doll List from DollAdapter and saves it to SQL DB
                             dbManager.updateAllDollOrders(adapter.getDollList());
 
-                            // notifies adapter and instantly shows the new visible order number
-                            //adapter.notifyDataSetChanged();
-                            // displaces focus of RecyclerView, so commented for future debugging
-
-                            recyclerView.post(() -> {
-                                for (int i = 0; i < recyclerView.getChildCount(); i++) {
-                                    DollAdapter.DollViewHolder holder = (DollAdapter.DollViewHolder) recyclerView.getChildViewHolder(recyclerView.getChildAt(i));
-                                    if (holder != null && holder.getAdapterPosition() != RecyclerView.NO_POSITION) {
-                                        holder.numberLabel.setText((holder.getAdapterPosition() + 1) + ".");
-                                    }
-                                }
-                            });
-
+                            // updates RecyclerView (by payload to update numbers only) and shows the new visible order number
+                            recyclerView.post(() -> adapter.notifyItemRangeChanged(0, adapter.getItemCount(), "UPDATE_NUMBERS"));
                         }
                     }
                 });

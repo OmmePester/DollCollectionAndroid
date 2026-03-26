@@ -26,6 +26,7 @@ import java.util.List;
 
 public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder> {
 
+    // VARIABLES
     private Context context;        // provided from CollectionActivity
     private List<Doll> dollList;    // provided from CollectionActivity's DatabaseManager
 
@@ -89,6 +90,18 @@ public class DollAdapter extends RecyclerView.Adapter<DollAdapter.DollViewHolder
             // starts activity, DollDetailActivity
             v.getContext().startActivity(intent);
         });
+    }
+
+    @Override
+    // this overloaded method uses specific PAYLOAD and updates ONLY ORDINAL NUMBERS on existing UI (RecyclerView/DollViewHolder)
+    public void onBindViewHolder(@NonNull DollViewHolder holder, int position, @NonNull List<Object> payloads) {
+        if (!payloads.isEmpty() && payloads.contains("UPDATE_NUMBERS")) {
+            // changes numberLabel numbers only, does NOT reload Glide or name text
+            holder.numberLabel.setText((position + 1) + ".");
+        } else {
+            // runs normal onBindViewHolder(), when scrolling, and projects Doll data on existing RecyclerView
+            onBindViewHolder(holder, position);
+        }
     }
 
     @Override

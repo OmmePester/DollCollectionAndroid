@@ -10,6 +10,7 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;    // added to handle image rotation bug
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.yalantis.ucrop.UCrop;    // added to handle image cropping with 3:4 ratio
 import java.io.File;
 import java.io.FileOutputStream;
@@ -60,19 +61,19 @@ public class AddDollActivity extends AppCompatActivity {
         saveButton.setOnClickListener(v -> saveDollToCloset());
     }
 
-    // this method checks image selection, extracts URI, manipulates image with uCrop, and displays image with Glide
     @Override
+    // this method checks image selection, extracts URI, manipulates image with uCrop, and displays image with Glide
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        // starts standard lifecycle
         super.onActivityResult(requestCode, resultCode, data);
 
-        // picks image from gallery and uses its URI on uCrop for cropping/zooming/rotating
+        // picks an image from gallery and uses its URI on uCrop for cropping/zooming/rotating
         if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
             // locates URI of initial image version
             Uri sourceUri = data.getData();
 
-            // creates a temporary and unique file to hold UNIQUE cropped version (millisecond addition prevents ghost image files)
-            String tempFileName = "temp_crop_" + System.currentTimeMillis() + ".jpg";
-            Uri destinationUri = Uri.fromFile(new File(getCacheDir(), tempFileName));
+            // creates temporary file to hold cropped version of an image
+            Uri destinationUri = Uri.fromFile(new File(getCacheDir(), "temp_crop.jpg"));
 
             // starts uCrop with a locked 3:4 aspect ratio
             UCrop.of(sourceUri, destinationUri)
@@ -85,10 +86,12 @@ public class AddDollActivity extends AppCompatActivity {
             // grabs  URI of final cropped image version
             selectedImageUri = UCrop.getOutput(data);
 
-            // USES GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY
+            // USES GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY, and skip cache to prevent showing old photo
             Glide.with(this)
                     .load(selectedImageUri)
                     .fitCenter()
+                    .skipMemoryCache(true)                        // prevents loading cache ghost image
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)    // prevents loading cache ghost image
                     .into(dollImageView);
         }
 

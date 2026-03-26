@@ -76,25 +76,25 @@ public class DollDetailActivity extends AppCompatActivity {
         genderField = findViewById(R.id.genderField);
         birthDateField = findViewById(R.id.birthDateField);
         birthTimeField = findViewById(R.id.birthTimeField);
+
         // listens to clicks and runs corresponding spinner methods
         birthDateField.setOnClickListener(v -> showDateSpinner());    // 3 scrolls of date spinner
         birthTimeField.setOnClickListener(v -> showTimeSpinner());    // 2 scrolls time spinner
 
-        //===================START INSERTION=====================
-        // listens to clicks on the image to open phone gallery for changing the photo
+        // listens to clicks on the image to open phone gallery to change the photo
         detailImage.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
             startActivityForResult(intent, 1000);
         });
-        //===================END INSERTION=====================
 
-        // listens and clears the field entirely when it is clicked
+        // listens to clicks and clears the field entirely
         View.OnFocusChangeListener clearOnFocus = (v, hasFocus) -> {
             if (hasFocus && v instanceof EditText) {
                 ((EditText) v).setText("");    // if hasFocus is true, set EditText to ""
             }
         };
+
         // applies previously created clearing behavior (behavior parametrization)
         detailName.setOnFocusChangeListener(clearOnFocus);
         brandField.setOnFocusChangeListener(clearOnFocus);
@@ -234,16 +234,15 @@ public class DollDetailActivity extends AppCompatActivity {
         currentDoll.setBirthDate(newDate);
         currentDoll.setBirthTime(newTime);
 
-        //===================START INSERTION=====================
-        // OVERWRITE ENGINE: If user picked a new photo, crush the old file with the new bytes!
+        // overwrites old image file with new image file data (bytes)
         if (newSelectedImageUri != null) {
             try {
-                // points directly at the existing file in the hidden closet
-                File existingFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
+                // locates existing image file in the hidden closet
+                File closetFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
 
-                // sucks data from the new crop, pours it directly over the old file
-                InputStream is = getContentResolver().openInputStream(newSelectedImageUri);
-                FileOutputStream fos = new FileOutputStream(existingFile);
+                // copies image from gallery to private 'closet' folder
+                InputStream is = getContentResolver().openInputStream(newSelectedImageUri);    // sucks data out of new image
+                FileOutputStream fos = new FileOutputStream(closetFile);                       // pours data inside of old image
                 byte[] buffer = new byte[1024];
                 int read;
                 while ((read = is.read(buffer)) != -1) {
@@ -256,7 +255,6 @@ public class DollDetailActivity extends AppCompatActivity {
                 Toast.makeText(this, "Failed to overwrite image file!", Toast.LENGTH_SHORT).show();
             }
         }
-        //===================END INSERTION=====================
 
         // uses DataBaseManager to save changes into closet.db
         dbManager.updateFullDollDetails(
@@ -271,6 +269,7 @@ public class DollDetailActivity extends AppCompatActivity {
                 newDate,
                 newTime
         );
+
         // displays small message at the bottom
         Toast.makeText(this, "Saved!", Toast.LENGTH_SHORT).show();
         finish();
@@ -348,17 +347,19 @@ public class DollDetailActivity extends AppCompatActivity {
         finish();
     }
 
-    //===================START INSERTION=====================
-    // this method catches the gallery selection, routes it to uCrop, and previews the new crop
     @Override
+    // this method checks image selection, extracts URI, manipulates image with uCrop, and displays image with Glide
     protected void onActivityResult(int requestCode, int resultCode, @Nullable Intent data) {
+        // starts standard lifecycle
         super.onActivityResult(requestCode, resultCode, data);
 
-        // 1. User successfully picked an image from the gallery
+        // picks new image file from gallery and uses its URI on uCrop for cropping/zooming/rotating
         if (resultCode == RESULT_OK && requestCode == 1000 && data != null) {
+            // locates URI of new image file
             Uri sourceUri = data.getData();
-            String tempFileName = "temp_crop_" + System.currentTimeMillis() + ".jpg";
-            Uri destinationUri = Uri.fromFile(new File(getCacheDir(), tempFileName));
+
+            // creates temporary file to hold cropped version of an image
+            Uri destinationUri = Uri.fromFile(new File(getCacheDir(), "temp_crop.jpg"));
 
             // starts uCrop with a locked 3:4 aspect ratio
             UCrop.of(sourceUri, destinationUri)
@@ -366,22 +367,21 @@ public class DollDetailActivity extends AppCompatActivity {
                     .start(this);
         }
 
-        // 2. User successfully finished cropping the image
+        // finalizes uCrop processes and passes it to Glide for preview
         if (resultCode == RESULT_OK && requestCode == UCrop.REQUEST_CROP && data != null) {
-            // saves to our temporary variable
+            // grabs  URI of final cropped image version
             newSelectedImageUri = UCrop.getOutput(data);
 
-            // PREVIEWS the newly cropped image immediately!
-            // Crucial: we must skip cache here so Glide doesn't accidentally show the old photo
+            // USES GLIDE FOR PREVIEW SO IT ROTATES CORRECTLY, and skip cache to prevent showing old photo
             Glide.with(this)
                     .load(newSelectedImageUri)
                     .fitCenter()
-                    .skipMemoryCache(true)
-                    .diskCacheStrategy(DiskCacheStrategy.NONE)
+                    .skipMemoryCache(true)                        // prevents loading cache ghost image
+                    .diskCacheStrategy(DiskCacheStrategy.NONE)    // prevents loading cache ghost image
                     .into(detailImage);
         }
 
-        // 3. Catches any errors during the crop process
+        // catches errors during cropping process
         if (resultCode == UCrop.RESULT_ERROR && data != null) {
             Throwable cropError = UCrop.getError(data);
             if (cropError != null) {
@@ -390,5 +390,4 @@ public class DollDetailActivity extends AppCompatActivity {
             }
         }
     }
-//===================END INSERTION=====================
 }
