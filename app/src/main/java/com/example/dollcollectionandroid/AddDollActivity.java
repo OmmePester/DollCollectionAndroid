@@ -1,5 +1,6 @@
 package com.example.dollcollectionandroid;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -106,15 +107,16 @@ public class AddDollActivity extends AppCompatActivity {
     }
 
     // this method saves image path and name to SQL DB, and copies image to local hidden folder
+    @SuppressLint("ResourceType")
     private void saveDollToCloset() {
-        // rejects saving process if there is no image URI or no name input
-        if (selectedImageUri == null || nameInput.getText().toString().isEmpty()) {
-            Toast.makeText(this, "Please add a name and photo!", Toast.LENGTH_SHORT).show();
+        // rejects saving process if there is NO NAME input (now image is added by default)
+        if (nameInput.getText().toString().isEmpty()) {
+            Toast.makeText(this, "Please name your dear Doll!", Toast.LENGTH_SHORT).show();
             return;
         }
 
         // saves name from EditText to String variable
-        String name = nameInput.getText().toString();
+        String name = nameInput.getText().toString().trim();
 
         // saves name and image path ("pending" for now) to SQL DB, addDoll() sets other entries to default values
         int newId = dbManager.addDoll(name, "pending");
@@ -129,9 +131,20 @@ public class AddDollActivity extends AppCompatActivity {
             // creates file path inside 'closet' folder
             File closetFile = new File(closetFolder, fileName);
 
-            // copies image from gallery to private 'closet' folder
-            InputStream is = getContentResolver().openInputStream(selectedImageUri);    // sucks data out of original image
-            FileOutputStream fos = new FileOutputStream(closetFile);                    // pours data inside of copy image
+            // instantiates InputStream to SUCK DATA FROM the original file
+            InputStream is;
+            if (selectedImageUri != null) {
+                // sucks data from gallery picked image file
+                is = getContentResolver().openInputStream(selectedImageUri);
+            } else {
+                // suck data from default "dummy_doll_default" image
+                is = getResources().openRawResource(R.drawable.dummy_doll_default);
+            }
+
+            // instantiates OutputStream to POUR DATA INSIDE a newly created copy file
+            FileOutputStream fos = new FileOutputStream(closetFile);
+
+            // copies byte-by-byte specified image to private 'closet' folder
             byte[] buffer = new byte[1024];
             int read;
             while ((read = is.read(buffer)) != -1) {

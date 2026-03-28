@@ -62,4 +62,6 @@ dependencies {
     implementation("com.google.apis:google-api-services-drive:v3-rev20230822-2.0.0")
     // uCrop library for image cropping
     implementation("com.github.yalantis:ucrop:2.2.8")
+    // PhotoView library for image viewing/zooming
+    implementation("com.github.chrisbanes:PhotoView:2.3.0")
 }

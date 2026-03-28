@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:fitsSystemWindows="true"
@@ -16,13 +17,43 @@
             android:layout_width="match_parent"
             android:layout_height="60dp" />
 
-        <ImageView
-            android:id="@+id/detailImage"
-            android:layout_width="match_parent"
-            android:layout_height="350dp"
-            android:adjustViewBounds="true"
-            android:scaleType="fitCenter"
-            android:layout_marginBottom="20dp" />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="20dp">
+
+                    <ImageView
+                        android:id="@+id/detailImage"
+                        android:layout_width="match_parent"
+                        android:layout_height="350dp"
+                        android:adjustViewBounds="true"
+                        android:scaleType="fitCenter" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:layout_alignBottom="@id/detailImage"
+                        android:layout_alignEnd="@id/detailImage"
+                        android:layout_marginEnd="8dp"
+                        android:layout_marginBottom="8dp">
+
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/btnEditPhoto"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:src="@android:drawable/ic_menu_edit"
+                                app:fabSize="mini"
+                                android:layout_marginBottom="12dp" />
+
+                            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                                android:id="@+id/btnSavePhoto"
+                                android:layout_width="wrap_content"
+                                android:layout_height="wrap_content"
+                                android:src="@android:drawable/ic_menu_save"
+                                app:fabSize="mini" />
+                    </LinearLayout>
+            </RelativeLayout>
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:text="Doll Name:" android:textStyle="bold" android:textColor="#555555"/>

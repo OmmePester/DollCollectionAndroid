@@ -1,6 +1,7 @@
 package com.example.dollcollectionandroid;
 
 import android.app.DatePickerDialog;
+import android.app.Dialog;
 import android.app.TimePickerDialog;
 import android.content.Intent;
 import android.net.Uri;
@@ -17,6 +18,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.example.dollcollectionandroid.model.Doll;
+import com.github.chrisbanes.photoview.PhotoView;
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import com.yalantis.ucrop.UCrop;
 
 import java.io.File;
@@ -33,6 +36,7 @@ import java.util.Calendar;
 public class DollDetailActivity extends AppCompatActivity {
     // VARIABLES
     private ImageView detailImage;
+    private FloatingActionButton btnEditPhoto, btnSavePhoto;
     private EditText detailName, brandField, modelField, yearField, descriptionArea;
     private EditText genderField, birthDateField, birthTimeField;
     private Calendar birthCalendar = Calendar.getInstance();
@@ -68,6 +72,8 @@ public class DollDetailActivity extends AppCompatActivity {
     private void initViews() {
         // binds variables with XML elements (ImageView, EditText) by ID
         detailImage = findViewById(R.id.detailImage);
+        btnEditPhoto = findViewById(R.id.btnEditPhoto);
+        btnSavePhoto = findViewById(R.id.btnSavePhoto);
         detailName = findViewById(R.id.detailName);
         brandField = findViewById(R.id.brandField);
         modelField = findViewById(R.id.modelField);
@@ -77,18 +83,20 @@ public class DollDetailActivity extends AppCompatActivity {
         birthDateField = findViewById(R.id.birthDateField);
         birthTimeField = findViewById(R.id.birthTimeField);
 
-        // listens to clicks and runs corresponding spinner methods
-        birthDateField.setOnClickListener(v -> showDateSpinner());    // 3 scrolls of date spinner
-        birthTimeField.setOnClickListener(v -> showTimeSpinner());    // 2 scrolls time spinner
+        // listens to clicks on the image and opens full-screen zoom dialog using PhotoView
+        detailImage.setOnClickListener(v -> showFullScreenZoomDialog());
 
-        // listens to clicks on the image to open phone gallery to change the photo
-        detailImage.setOnClickListener(v -> {
+        // listens to clicks on the EDIT FAB and open phone gallery to change Doll image
+        btnEditPhoto.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_PICK);
             intent.setType("image/*");
             startActivityForResult(intent, 1000);
         });
 
-        // listens to clicks and clears the field entirely
+        // listens to clicks and 3. SAVE BUTTON CLICK: calls handleSaveDescription() to save all changes
+        btnSavePhoto.setOnClickListener(v -> handleSaveImage());
+
+        // listens to clicks and clears the field entirely (it is a behavior to be passed)
         View.OnFocusChangeListener clearOnFocus = (v, hasFocus) -> {
             if (hasFocus && v instanceof EditText) {
                 ((EditText) v).setText("");    // if hasFocus is true, set EditText to ""
@@ -103,6 +111,34 @@ public class DollDetailActivity extends AppCompatActivity {
         // do NOT apply this to descriptionArea, we can lose long notes by accident
         genderField.setOnFocusChangeListener(clearOnFocus);
         // do NOT apply this to birthDateField/birthTimeField as well
+
+        // listens to clicks and runs corresponding spinner methods
+        birthDateField.setOnClickListener(v -> showDateSpinner());    // 3 scrolls of date spinner
+        birthTimeField.setOnClickListener(v -> showTimeSpinner());    // 2 scrolls time spinner
+    }
+
+    // this method creates a full-screen black dialog and uses PhotoView to allow pinch-to-zoom
+    private void showFullScreenZoomDialog() {
+        // instantiates Dialog object with black background and PhotoView object to view selected Doll image
+        Dialog zoomDialog = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        PhotoView photoView = new PhotoView(this);
+
+        // loads Doll image from its URI into PhotoView object
+        if (newSelectedImageUri != null) {
+            // loads EDITED Doll image from URI into PhotoView
+            photoView.setImageURI(newSelectedImageUri);
+        } else if (currentDoll != null) {
+            // locates the path of initial/unedited Doll image
+            File imgFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
+            if (imgFile.exists()) {
+                // loads INITIAL/UNEDITED Doll image from URI (of its path) into PhotoView
+                photoView.setImageURI(Uri.fromFile(imgFile));
+            }
+        }
+
+        // sets Dialog object with PhotoView object holding Doll image URI and shows it
+        zoomDialog.setContentView(photoView);
+        zoomDialog.show();
     }
 
     // this method handles FORMATTING, change according to user demand
@@ -208,7 +244,36 @@ public class DollDetailActivity extends AppCompatActivity {
         }
     }
 
-    // this method saves field changes of DollDetailActivity window into SQL DB
+    // this method saves IMAGE changes of DollDetailActivity window into hidden '.closetDollUp' folder
+    private void handleSaveImage() {
+        // overwrites old image file with new image file data (bytes)
+        if (newSelectedImageUri != null) {
+            try {
+                // locates existing image file in the hidden closet
+                File closetFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
+
+                // copies image from gallery to private 'closet' folder
+                InputStream is = getContentResolver().openInputStream(newSelectedImageUri);    // sucks data out of new image
+                FileOutputStream fos = new FileOutputStream(closetFile);                       // pours data inside of old image
+                byte[] buffer = new byte[1024];
+                int read;
+                while ((read = is.read(buffer)) != -1) {
+                    fos.write(buffer, 0, read);
+                }
+                is.close();
+                fos.close();
+
+                // clears URI so we do not save it more than once
+                newSelectedImageUri = null;
+                Toast.makeText(this, "Photo updated!", Toast.LENGTH_SHORT).show();
+            } catch (Exception e) {
+                e.printStackTrace();
+                Toast.makeText(this, "Failed to overwrite image file!", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
+    // this method saves TEXT FIELD changes of DollDetailActivity window into SQL DB
     private void handleSaveDescription() {
         // collects data from UI
         String newName = detailName.getText().toString();
@@ -233,28 +298,6 @@ public class DollDetailActivity extends AppCompatActivity {
         currentDoll.setGender(newGender);
         currentDoll.setBirthDate(newDate);
         currentDoll.setBirthTime(newTime);
-
-        // overwrites old image file with new image file data (bytes)
-        if (newSelectedImageUri != null) {
-            try {
-                // locates existing image file in the hidden closet
-                File closetFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
-
-                // copies image from gallery to private 'closet' folder
-                InputStream is = getContentResolver().openInputStream(newSelectedImageUri);    // sucks data out of new image
-                FileOutputStream fos = new FileOutputStream(closetFile);                       // pours data inside of old image
-                byte[] buffer = new byte[1024];
-                int read;
-                while ((read = is.read(buffer)) != -1) {
-                    fos.write(buffer, 0, read);
-                }
-                is.close();
-                fos.close();
-            } catch (Exception e) {
-                e.printStackTrace();
-                Toast.makeText(this, "Failed to overwrite image file!", Toast.LENGTH_SHORT).show();
-            }
-        }
 
         // uses DataBaseManager to save changes into closet.db
         dbManager.updateFullDollDetails(
@@ -340,10 +383,17 @@ public class DollDetailActivity extends AppCompatActivity {
 
     // Doll Deleting Method (Step 3), actually deleting from everywhere
     private void terminateDoll() {
-        // deletes Doll and all its data in SQL by unique ID
+
+        // locates and deletes physical Doll image file in hidden folder
+        File imgFile = new File(StorageHelper.getHiddenFolder(), "closet/" + currentDoll.getImagePath());
+        if (imgFile.exists()) {
+            imgFile.delete();
+        }
+
+        // deletes Doll and all its data in SQL DB by unique ID
         dbManager.deleteDollById(currentDoll.getId());
 
-        // lastly CLOSE detail window AUTOMATICALLY
+        // lastly CLOSES detail window AUTOMATICALLY!
         finish();
     }
 
