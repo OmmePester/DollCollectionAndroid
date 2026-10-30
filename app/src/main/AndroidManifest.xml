@@ -36,12 +36,14 @@
         <activity
             android:name=".AddDollActivity"
             android:label="@string/title_add_doll"
-            android:parentActivityName=".CollectionActivity" />
+            android:parentActivityName=".CollectionActivity"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".DollDetailActivity"
             android:label="@string/title_doll_detail"
-            android:parentActivityName=".CollectionActivity" />
+            android:parentActivityName=".CollectionActivity"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".SettingsActivity"

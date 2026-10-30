@@ -10,6 +10,11 @@ import android.widget.ImageView;
 import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+//=========== INSERTION STARTS ============
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+//============ INSERTION ENDS =============
+
 import com.bumptech.glide.Glide;    // added to handle image rotation bug
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.yalantis.ucrop.UCrop;    // added to handle image cropping with 3:4 ratio
@@ -42,6 +47,71 @@ public class AddDollActivity extends AppCompatActivity {
 
         // connects XML file with this activity
         setContentView(R.layout.activity_add_doll);
+
+//        =========== INSERTION STARTS ============
+        // Enable keyboard resizing and handle the focused input.
+        getWindow().setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        );
+
+        android.widget.ScrollView scrollView = findViewById(R.id.addDollScrollView);
+
+        int initialLeft = scrollView.getPaddingLeft();
+        int initialTop = scrollView.getPaddingTop();
+        int initialRight = scrollView.getPaddingRight();
+        int initialBottom = scrollView.getPaddingBottom();
+
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView, (view, windowInsets) -> {
+
+            int keyboardHeight = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.ime()
+            ).bottom;
+
+            view.setPadding(
+                    initialLeft,
+                    initialTop,
+                    initialRight,
+                    initialBottom + keyboardHeight
+            );
+
+            if (keyboardHeight > 0) {
+                view.post(() -> {
+                    android.view.View focusedView = getCurrentFocus();
+
+                    if (focusedView != null && focusedView != scrollView) {
+                        android.graphics.Rect focusedRect = new android.graphics.Rect();
+
+                        focusedView.getDrawingRect(focusedRect);
+                        scrollView.offsetDescendantRectToMyCoords(
+                                focusedView,
+                                focusedRect
+                        );
+
+                        int visibleBottom = scrollView.getHeight()
+                                - scrollView.getPaddingBottom();
+
+                        int visibleTop = scrollView.getPaddingTop();
+
+                        if (focusedRect.bottom > visibleBottom) {
+                            scrollView.smoothScrollBy(
+                                    0,
+                                    focusedRect.bottom - visibleBottom + 16
+                            );
+                        } else if (focusedRect.top < visibleTop) {
+                            scrollView.smoothScrollBy(
+                                    0,
+                                    focusedRect.top - visibleTop - 16
+                            );
+                        }
+                    }
+                });
+            }
+
+            return windowInsets;
+        });
+
+        ViewCompat.requestApplyInsets(scrollView);
+//        ============ INSERTION ENDS =============
 
         // finds IDs of XML elements (ImageView, TextView, Button)
         nameInput = findViewById(R.id.nameInput);

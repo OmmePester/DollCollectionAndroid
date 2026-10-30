@@ -14,6 +14,10 @@ import android.widget.*;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+//=========== INSERTION STARTS ============
+import androidx.core.view.ViewCompat;
+import androidx.core.view.WindowInsetsCompat;
+//============ INSERTION ENDS =============
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.DiskCacheStrategy;
@@ -52,6 +56,91 @@ public class DollDetailActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         // connects XML file with this activity
         setContentView(R.layout.activity_doll_detail);
+
+//=========== INSERTION STARTS ============
+        // Enable keyboard resizing and handle the focused input.
+        getWindow().setSoftInputMode(
+                android.view.WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE
+        );
+
+        android.widget.ScrollView scrollView = findViewById(R.id.dollDetailScrollView);
+
+        int initialLeft = scrollView.getPaddingLeft();
+        int initialTop = scrollView.getPaddingTop();
+        int initialRight = scrollView.getPaddingRight();
+        int initialBottom = scrollView.getPaddingBottom();
+
+        // Remember the original scroll position before the keyboard opens.
+        final int[] previousScrollY = {0};
+        final boolean[] keyboardVisible = {false};
+
+        ViewCompat.setOnApplyWindowInsetsListener(scrollView, (view, windowInsets) -> {
+
+            int keyboardHeight = windowInsets.getInsets(
+                    WindowInsetsCompat.Type.ime()
+            ).bottom;
+
+            view.setPadding(
+                    initialLeft,
+                    initialTop,
+                    initialRight,
+                    initialBottom + keyboardHeight
+            );
+
+            if (keyboardHeight > 0) {
+
+                if (!keyboardVisible[0]) {
+                    previousScrollY[0] = view.getScrollY();
+                    keyboardVisible[0] = true;
+                }
+
+                view.post(() -> {
+                    android.view.View focusedView = getCurrentFocus();
+
+                    if (focusedView != null && focusedView != scrollView) {
+                        android.graphics.Rect focusedRect = new android.graphics.Rect();
+                        focusedView.getDrawingRect(focusedRect);
+
+                        scrollView.offsetDescendantRectToMyCoords(
+                                focusedView,
+                                focusedRect
+                        );
+
+                        int visibleBottom = scrollView.getHeight()
+                                - scrollView.getPaddingBottom();
+
+                        int visibleTop = scrollView.getPaddingTop();
+
+                        int requiredScroll = focusedRect.bottom - visibleBottom;
+
+                        if (requiredScroll > 0) {
+                            scrollView.smoothScrollBy(0, requiredScroll + 1);
+                        } else if (focusedRect.top < visibleTop) {
+                            scrollView.smoothScrollBy(
+                                    0,
+                                    focusedRect.top - visibleTop - 1
+                            );
+                        }
+                    }
+                });
+
+            } else if (keyboardVisible[0]) {
+
+                // Restore the exact scroll position from before the keyboard opened.
+                keyboardVisible[0] = false;
+
+                view.post(() -> view.scrollTo(
+                        view.getScrollX(),
+                        previousScrollY[0]
+                ));
+            }
+
+            return windowInsets;
+        });
+
+        ViewCompat.requestApplyInsets(scrollView);
+//============ INSERTION ENDS =============
+
         // instantiates DatabaseManager for SQL DB operations, passes this activity Context
         dbManager = new DatabaseManager(this);
         // gets ID of selected Doll, using Intent created in DollAdapter
