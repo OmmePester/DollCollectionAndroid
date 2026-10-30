@@ -104,13 +104,13 @@ public class DollDetailActivity extends AppCompatActivity {
         };
 
         // applies previously created clearing behavior (behavior parametrization)
-        detailName.setOnFocusChangeListener(clearOnFocus);
-        brandField.setOnFocusChangeListener(clearOnFocus);
-        modelField.setOnFocusChangeListener(clearOnFocus);
-        yearField.setOnFocusChangeListener(clearOnFocus);
-        // do NOT apply this to descriptionArea, we can lose long notes by accident
-        genderField.setOnFocusChangeListener(clearOnFocus);
-        // do NOT apply this to birthDateField/birthTimeField as well
+//        detailName.setOnFocusChangeListener(clearOnFocus);
+//        brandField.setOnFocusChangeListener(clearOnFocus);
+//        modelField.setOnFocusChangeListener(clearOnFocus);
+//        yearField.setOnFocusChangeListener(clearOnFocus);
+//        // do NOT apply this to descriptionArea, we can lose long notes by accident
+//        genderField.setOnFocusChangeListener(clearOnFocus);
+//        // do NOT apply this to birthDateField/birthTimeField as well
 
         // listens to clicks and runs corresponding spinner methods
         birthDateField.setOnClickListener(v -> showDateSpinner());    // 3 scrolls of date spinner
